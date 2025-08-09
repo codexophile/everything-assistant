@@ -13,6 +13,12 @@
   <div>
     Interactive page contents. Hello <span id="username">user</span>!
   </div>
+  <hr />
+  <div>
+    <strong>Selected file:</strong>
+    <div id="sel-name">(none)</div>
+    <div id="sel-path" style="font-family: Consolas, monospace; font-size: 12px; color: #444">(no path)</div>
+  </div>
   <div>
     <form onsubmit="submitForm(event)">
       <input type="text" name="toSend" placeholder="text to send"></input>
@@ -37,6 +43,22 @@
     // Populate the username element
     const name = await ahk.global.A_UserName;
     document.querySelector( '#username' ).innerText = name;
+
+    // Helper to render current selection from AHK globals
+    async function renderSelection () {
+      try {
+        const fileName = await ahk.global.SelectedFileName;
+        const filePath = await ahk.global.SelectedFilePath;
+        document.querySelector( '#sel-name' ).innerText = fileName && fileName.trim() ? fileName : '(none)';
+        document.querySelector( '#sel-path' ).innerText = filePath && filePath.trim() ? filePath : '(no path)';
+      } catch ( e ) {
+        // ignore if globals not yet available
+      }
+    }
+
+    // Initial render and expose updater for AHK to call
+    await renderSelection();
+    window.updateSelectedFromAhk = renderSelection;
   </script>
 </body>
 
