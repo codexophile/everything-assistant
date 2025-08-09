@@ -28,22 +28,11 @@
     <div id="sel-name" style="display:none"></div>
     <div id="sel-path" style="font-family: Consolas, monospace; font-size: 12px; color: #444">(no path)</div>
   </div>
+  <hr />
   <div id="file-actions">
-    <form onsubmit="submitForm(event)">
-      <input type="text" name="toSend" placeholder="text to send"></input>
-      <button type="submit">Submit</button>
-    </form>
   </div>
   <script type="module">
     // script type="module" so we can use await
-
-    // Set up a form submission function to pass the values to AHK
-    window.submitForm = async function ( event ) {
-      event.preventDefault();
-      await ahk.global.SubmitForm( {
-        toSend: event.target.querySelector( '[name="toSend"]' ).value
-      } );
-    };
 
     // Helper to render current selection from AHK globals
     async function renderSelection () {
