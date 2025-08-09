@@ -3,15 +3,41 @@
 
 <head>
   <style>
+    /* layout */
     div {
       margin-bottom: 0.5em;
     }
 
-    #sel-name {
+    #main-toolbar,
+    #secondary-toolbar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* monospace helpers */
+    .mono {
       white-space: pre-line;
       font-family: Consolas, monospace;
       font-size: 12px;
       color: #333;
+    }
+
+    .mono-dim {
+      color: #444;
+    }
+
+    /* folder action buttons */
+    .folder-btn {
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .folder-btn.excluded {
+      background: #fdd;
     }
   </style>
 </head>
@@ -24,8 +50,8 @@
   <hr />
   <div id="file-info">
     <div id="sel-summary">(none)</div>
-    <div id="sel-name" style="display:none"></div>
-    <div id="sel-path" style="font-family: Consolas, monospace; font-size: 12px; color: #444">(no path)</div>
+    <div id="sel-name" class="mono" style="display:none"></div>
+    <div id="sel-path" class="mono mono-dim">(no path)</div>
   </div>
   <hr />
   <div id="file-actions">
@@ -33,138 +59,117 @@
   <script type="module">
     // script type="module" so we can use await
 
-    // Helper to render current selection from AHK globals
-    async function renderSelection () {
-      try {
-        const fileName = await ahk.global.SelectedFileName;
-        const filePath = await ahk.global.SelectedFilePath;
-        const namesAll = ( await ahk.global.SelectedNames ) || '';
-        const count = Number( await ahk.global.SelectedCount ) || 0;
-        const folderChain = ( await ahk.global.SelectedFolderPaths ) || '';
-        const selSummary = document.querySelector( '#sel-summary' );
-        const selName = document.querySelector( '#sel-name' );
-        const selPath = document.querySelector( '#sel-path' );
-        const actions = document.querySelector( '#file-actions' );
+    // DOM refs
+    const els = {
+      summary: document.querySelector( '#sel-summary' ),
+      name: document.querySelector( '#sel-name' ),
+      path: document.querySelector( '#sel-path' ),
+      actions: document.querySelector( '#file-actions' ),
+      secondary: document.querySelector( '#secondary-toolbar' ),
+      btnDelete: document.querySelector( '#btn-delete' )
+    };
 
-        if ( count > 1 ) {
-          selSummary.innerText = `${ count } items selected`;
-          selName.style.display = '';
-          selName.innerText = namesAll.split( '\n' ).slice( 0, 10 ).join( '\n' );
-          selPath.innerText = '(multiple paths)';
-          // For multi-select, clear folder chain display
-          actions.innerHTML = '';
-        } else if ( count === 1 || ( fileName && fileName.trim() ) ) {
-          selSummary.innerText = '1 item selected';
-          selName.style.display = '';
-          selName.innerText = fileName;
-          selPath.innerText = filePath && filePath.trim() ? filePath : '(no path)';
-          // Render parent-to-root folder chain
-          const items = folderChain ? folderChain.split( '\n' ) : [];
-          if ( items.length ) {
-            actions.innerHTML = '';
-            const btns = document.createElement( 'div' );
-            btns.style.display = 'flex';
-            btns.style.flexDirection = 'column';
-            btns.style.gap = '2px';
-            // Helper to check if exclusion is present in search box
-            async function isExcluded ( folder ) {
-              const curr = await ahk.getControlText( 'Edit1', 'ahk_class EVERYTHING_(1.5a)' );
-              const excl = `!"${ folder }:`;
-              return curr && curr.includes( excl );
-            }
-            // For each folder, create a button
-            items.forEach( ( folder ) => {
-              const btn = document.createElement( 'button' );
-              btn.textContent = folder;
-              btn.style.fontFamily = 'Consolas, monospace';
-              btn.style.fontSize = '12px';
-              btn.style.textAlign = 'left';
-              btn.style.overflow = 'hidden';
-              btn.style.textOverflow = 'ellipsis';
-              btn.title = `Toggle exclusion for ${ folder }`;
-              // Set initial state
-              ( async () => {
-                if ( await isExcluded( folder ) ) {
-                  btn.classList.add( 'excluded' );
-                  btn.style.background = '#fdd';
-                } else {
-                  btn.classList.remove( 'excluded' );
-                  btn.style.background = '';
-                }
-              } )();
-              btn.addEventListener( 'click', async () => {
-                await ahk.global.ToggleExcludeFolder( folder );
-                // Update button state after toggling
-                if ( await isExcluded( folder ) ) {
-                  btn.classList.add( 'excluded' );
-                  btn.style.background = '#fdd';
-                } else {
-                  btn.classList.remove( 'excluded' );
-                  btn.style.background = '';
-                }
-              } );
-              btns.appendChild( btn );
-            } );
-            actions.appendChild( btns );
-          } else {
-            actions.innerHTML = '';
-          }
-        } else {
-          selSummary.innerText = '(none)';
-          selName.style.display = 'none';
-          selName.innerText = '';
-          selPath.innerText = '(no path)';
-          actions.innerHTML = '';
-        }
-      } catch ( e ) {
-        // ignore if globals not yet available
-      }
+    // Helpers
+    const setExcludedStyle = ( btn, excluded ) => {
+      btn.classList.toggle( 'excluded', !!excluded );
+    };
+
+    async function isExcluded ( folder ) {
+      const curr = await ahk.getControlText( 'Edit1', 'ahk_class EVERYTHING_(1.5a)' );
+      // Everything exclusion syntax for a path: !"C:\\Path"
+      const excl = `!"${ folder }"`;
+      return !!curr && curr.includes( excl );
     }
 
-    // Wire up secondary toolbar: Exclude Folders
-    const secondary = document.querySelector( '#secondary-toolbar' );
+    function renderFolderButtons ( items ) {
+      if ( !items?.length ) { els.actions.innerHTML = ''; return; }
+      els.actions.innerHTML = '';
+      const btns = document.createElement( 'div' );
+      btns.style.display = 'flex';
+      btns.style.flexDirection = 'column';
+      btns.style.gap = '2px';
+      items.forEach( ( folder ) => {
+        const btn = document.createElement( 'button' );
+        btn.className = 'folder-btn';
+        btn.textContent = folder;
+        btn.title = `Toggle exclusion for ${ folder }`;
+        ( async () => setExcludedStyle( btn, await isExcluded( folder ) ) )();
+        btn.addEventListener( 'click', async () => {
+          await ahk.global.ToggleExcludeFolder( folder );
+          setExcludedStyle( btn, await isExcluded( folder ) );
+        } );
+        btns.appendChild( btn );
+      } );
+      els.actions.appendChild( btns );
+    }
+
+    // Render current selection from AHK globals
+    async function renderSelection () {
+      try {
+        const [ fileName, filePath, namesAll, countRaw, folderChain ] = await Promise.all( [
+          ahk.global.SelectedFileName,
+          ahk.global.SelectedFilePath,
+          ahk.global.SelectedNames,
+          ahk.global.SelectedCount,
+          ahk.global.SelectedFolderPaths,
+        ] );
+        const count = Number( countRaw ) || 0;
+        if ( count > 1 ) {
+          els.summary.innerText = `${ count } items selected`;
+          els.name.style.display = '';
+          els.name.innerText = ( namesAll || '' ).split( '\n' ).slice( 0, 10 ).join( '\n' );
+          els.path.innerText = '(multiple paths)';
+          els.actions.innerHTML = '';
+          return;
+        }
+        if ( count === 1 || ( fileName && fileName.trim() ) ) {
+          els.summary.innerText = '1 item selected';
+          els.name.style.display = '';
+          els.name.innerText = fileName || '';
+          els.path.innerText = filePath && filePath.trim() ? filePath : '(no path)';
+          const items = folderChain ? folderChain.split( '\n' ) : [];
+          renderFolderButtons( items );
+          return;
+        }
+        // none selected
+        els.summary.innerText = '(none)';
+        els.name.style.display = 'none';
+        els.name.innerText = '';
+        els.path.innerText = '(no path)';
+        els.actions.innerHTML = '';
+      } catch { /* ignore if globals not yet available */ }
+    }
+
+    // Secondary toolbar: Exclude Folders toggle (!folder:)
     const btnExclude = document.createElement( 'button' );
     btnExclude.id = 'btn-exclude-folders';
     btnExclude.title = 'Exclude folders (!folder:)';
     btnExclude.textContent = 'Exclude Folders';
-    secondary.appendChild( btnExclude );
-
+    els.secondary.appendChild( btnExclude );
     btnExclude.addEventListener( 'click', async () => {
+      try { await ahk.global.ExcludeFolders(); } catch ( e ) { console.error( 'ExcludeFolders failed', e ); }
+    } );
+
+    // Delete button state and action
+    async function updateDeleteState () {
       try {
-        await ahk.global.ExcludeFolders();
-      } catch ( e ) {
-        console.error( 'ExcludeFolders failed', e );
-      }
+        const [ countRaw, filePath ] = await Promise.all( [
+          ahk.global.SelectedCount,
+          ahk.global.SelectedFilePath,
+        ] );
+        const count = Number( countRaw ) || 0;
+        els.btnDelete.disabled = !( count > 0 || ( filePath && filePath.trim() ) );
+      } catch { /* ignore */ }
+    }
+    els.btnDelete.addEventListener( 'click', async () => {
+      try { await ahk.global.DeleteSelected(); } catch ( e ) { console.error( 'DeleteSelected failed', e ); }
     } );
 
     // Initial render and expose updater for AHK to call
     await renderSelection();
-    window.updateSelectedFromAhk = renderSelection;
-
-    // Enable/disable delete button based on selection and wire click
-    const btnDelete = document.querySelector( '#btn-delete' );
-    async function updateDeleteState () {
-      try {
-        const count = Number( await ahk.global.SelectedCount ) || 0;
-        const filePath = await ahk.global.SelectedFilePath;
-        btnDelete.disabled = !( count > 0 || ( filePath && filePath.trim() ) );
-      } catch { }
-    }
     await updateDeleteState();
-    // Reuse existing updater to also update button state
-    const oldUpdater = window.updateSelectedFromAhk;
-    window.updateSelectedFromAhk = async function () {
-      await oldUpdater();
-      await updateDeleteState();
-    };
-
-    btnDelete.addEventListener( 'click', async () => {
-      try {
-        await ahk.global.DeleteSelected();
-      } catch ( e ) {
-        console.error( 'DeleteSelected failed', e );
-      }
-    } );
+    const oldUpdater = renderSelection;
+    window.updateSelectedFromAhk = async () => { await oldUpdater(); await updateDeleteState(); };
   </script>
 </body>
 

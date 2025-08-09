@@ -2,6 +2,7 @@
 #SingleInstance Force
 #Include ..\#lib\WebViewToo\WebViewToo.ahk
 
+; Constants
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
 AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
@@ -11,84 +12,88 @@ SelectedFilePath := ""
 SelectedFileName := ""
 LastSelectedPath := ""
 LastSelectedName := ""
-; Multi-select support
-SelectedNames := "" ; Newline-delimited names from Everything list view
+SelectedNames := ""        ; newline-delimited names from Everything list view
 SelectedCount := 0
-; Folder chain (parent -> root) for the current single selection
-SelectedFolderPaths := ""
+SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single selection
 
+; GUI setup
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
 
+; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
 
 CheckEverythingActive() {
-  global AssistantGui, SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
+  global AssistantGui
+  global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
   global SelectedNames, SelectedCount, SelectedFolderPaths
+  global EverythingWindowTitle, AssistantWindowTitle
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
+    status := StatusBarGetText(, EverythingWindowTitle)
+    fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
+    names := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
+    currCount := (names && names != "") ? StrSplit(names, "`n").Length : 0
 
-    StatusText := StatusBarGetText(, EverythingWindowTitle)
-    FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
-    ; Get all selected item names (column 1), newline-delimited if multiple
-    SelectedName := ListViewGetContent("Selected Col1", "SysListView321", "ahk_class EVERYTHING_(1.5a)")
-    currCount := (SelectedName && SelectedName != "") ? StrSplit(SelectedName, "`n").Length : 0
-
-    if (FileSelected || currCount > 0) {
-      currPath := FileSelected ? Path[1] : ""
-      currName := SelectedName
+    if (fileSelected || currCount > 0) {
+      currPath := fileSelected ? Path[1] : ""
+      currName := names
       if (currPath != LastSelectedPath || currName != LastSelectedName) {
         SelectedFilePath := currPath
         SelectedFileName := currName
-        SelectedNames := SelectedName
+        SelectedNames := names
         SelectedCount := currCount
+
         ; Update folder chain only for single-selection with a valid path
         SelectedFolderPaths := ""
         if ((SelectedCount = 1) && (SelectedFilePath != "")) {
           folders := GetFoldersFullPaths(SelectedFilePath)
-          chain := ""
-          for _, fPath in folders {
-            chain .= (chain = "" ? "" : "`n") . fPath
-          }
-          SelectedFolderPaths := chain
+          SelectedFolderPaths := JoinWithNewlines(folders)
         }
+
         LastSelectedPath := currPath
         LastSelectedName := currName
         ; Notify webview to update its UI from ahk.global variables
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
       }
-    } else {
-      if (LastSelectedPath != "" || LastSelectedName != "") {
-        SelectedFilePath := ""
-        SelectedFileName := ""
-        SelectedNames := ""
-        SelectedCount := 0
-        SelectedFolderPaths := ""
-        LastSelectedPath := ""
-        LastSelectedName := ""
-        AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
-      }
+    } else if (LastSelectedPath != "" || LastSelectedName != "") {
+      ; Clear selection state and notify
+      SelectedFilePath := ""
+      SelectedFileName := ""
+      SelectedNames := ""
+      SelectedCount := 0
+      SelectedFolderPaths := ""
+      LastSelectedPath := ""
+      LastSelectedName := ""
+      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
     AssistantGui.Show("w300 h300 NoActivate")
-
   } else {
     AssistantGui.Hide()
   }
 }
 
-GetFoldersFullPaths(OriginalPath, FolderPaths := []) {
-  FolderPaths.Push(OriginalPath)
-  SplitPath(OriginalPath, , &ParentFolder)
-  if (OriginalPath = ParentFolder || ParentFolder = "")
-    return FolderPaths
-  return GetFoldersFullPaths(ParentFolder, FolderPaths)
+GetFoldersFullPaths(originalPath, folderPaths := []) {
+  folderPaths.Push(originalPath)
+  SplitPath(originalPath, , &parent)
+  if (originalPath = parent || parent = "")
+    return folderPaths
+  return GetFoldersFullPaths(parent, folderPaths)
 }
 
-; Text := ControlGetText("Edit1", "ahk_class EVERYTHING_(1.5a)")
+JoinWithNewlines(arr) {
+  out := ""
+  for _, v in arr
+    out .= (out = "" ? "" : "`n") . v
+  return out
+}
+
+; Debug helpers
+; Text := ControlGetText("Edit1", EverythingWindowTitle)
 ; MsgBox(Text)
-; ControlSetText("Test", "Edit1", "ahk_class EVERYTHING_(1.5a)")
+; ControlSetText("Test", "Edit1", EverythingWindowTitle)
 
 SubmitForm(data) {
   MsgBox data.toSend
@@ -109,9 +114,9 @@ DeleteSelected() {
     return
   }
   ; Optional: Confirm if nothing selected
-  StatusText := StatusBarGetText(, EverythingWindowTitle)
-  FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
-  if (!FileSelected && SelectedCount <= 0) {
+  status := StatusBarGetText(, EverythingWindowTitle)
+  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
+  if (!fileSelected && SelectedCount <= 0) {
     MsgBox "No items selected to delete."
     return
   }
