@@ -88,9 +88,6 @@
     btnExclude.addEventListener( 'click', async () => {
       try {
         await ahk.global.ExcludeFolders();
-        // Toggle button text based on current state
-        const currText = btnExclude.textContent;
-        btnExclude.textContent = currText.includes( 'Exclude' ) ? 'Include Folders' : 'Exclude Folders';
       } catch ( e ) {
         console.error( 'ExcludeFolders failed', e );
       }
