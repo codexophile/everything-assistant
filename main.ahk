@@ -11,6 +11,9 @@ SelectedFilePath := ""
 SelectedFileName := ""
 LastSelectedPath := ""
 LastSelectedName := ""
+; Multi-select support
+SelectedNames := "" ; Newline-delimited names from Everything list view
+SelectedCount := 0
 
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
@@ -20,19 +23,24 @@ SetTimer(CheckEverythingActive, 100)
 
 CheckEverythingActive() {
   global AssistantGui, SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
+  global SelectedNames, SelectedCount
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
 
     StatusText := StatusBarGetText(, EverythingWindowTitle)
     FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
+    ; Get all selected item names (column 1), newline-delimited if multiple
     SelectedName := ListViewGetContent("Selected Col1", "SysListView321", "ahk_class EVERYTHING_(1.5a)")
+    currCount := (SelectedName && SelectedName != "") ? StrSplit(SelectedName, "`n").Length : 0
 
-    if (FileSelected) {
-      currPath := Path[1]
+    if (FileSelected || currCount > 0) {
+      currPath := FileSelected ? Path[1] : ""
       currName := SelectedName
       if (currPath != LastSelectedPath || currName != LastSelectedName) {
         SelectedFilePath := currPath
         SelectedFileName := currName
+        SelectedNames := SelectedName
+        SelectedCount := currCount
         LastSelectedPath := currPath
         LastSelectedName := currName
         ; Notify webview to update its UI from ahk.global variables
@@ -42,6 +50,8 @@ CheckEverythingActive() {
       if (LastSelectedPath != "" || LastSelectedName != "") {
         SelectedFilePath := ""
         SelectedFileName := ""
+        SelectedNames := ""
+        SelectedCount := 0
         LastSelectedPath := ""
         LastSelectedName := ""
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
@@ -74,6 +84,7 @@ SubmitForm(data) {
 ; Delete currently selected files in Everything by simulating Delete key.
 ; Safety: ensures Everything window is active before sending Delete.
 DeleteSelected() {
+  global EverythingWindowTitle, SelectedCount
   if !WinExist(EverythingWindowTitle) {
     MsgBox "Everything window not found."
     return
@@ -87,7 +98,7 @@ DeleteSelected() {
   ; Optional: Confirm if nothing selected
   StatusText := StatusBarGetText(, EverythingWindowTitle)
   FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
-  if (!FileSelected) {
+  if (!FileSelected && SelectedCount <= 0) {
     MsgBox "No items selected to delete."
     return
   }

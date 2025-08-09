@@ -6,6 +6,13 @@
     div {
       margin-bottom: 0.5em;
     }
+
+    #sel-name {
+      white-space: pre-line;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #333;
+    }
   </style>
 </head>
 
@@ -15,8 +22,9 @@
   </div>
   <hr />
   <div id="file-info">
-    <strong>Selected file:</strong>
-    <div id="sel-name">(none)</div>
+    <strong>Selection:</strong>
+    <div id="sel-summary">(none)</div>
+    <div id="sel-name" style="display:none"></div>
     <div id="sel-path" style="font-family: Consolas, monospace; font-size: 12px; color: #444">(no path)</div>
   </div>
   <div id="file-actions">
@@ -41,8 +49,28 @@
       try {
         const fileName = await ahk.global.SelectedFileName;
         const filePath = await ahk.global.SelectedFilePath;
-        document.querySelector( '#sel-name' ).innerText = fileName && fileName.trim() ? fileName : '(none)';
-        document.querySelector( '#sel-path' ).innerText = filePath && filePath.trim() ? filePath : '(no path)';
+        const namesAll = ( await ahk.global.SelectedNames ) || '';
+        const count = Number( await ahk.global.SelectedCount ) || 0;
+        const selSummary = document.querySelector( '#sel-summary' );
+        const selName = document.querySelector( '#sel-name' );
+        const selPath = document.querySelector( '#sel-path' );
+
+        if ( count > 1 ) {
+          selSummary.innerText = `${ count } items selected`;
+          selName.style.display = '';
+          selName.innerText = namesAll.split( '\n' ).slice( 0, 10 ).join( '\n' );
+          selPath.innerText = '(multiple paths)';
+        } else if ( count === 1 || ( fileName && fileName.trim() ) ) {
+          selSummary.innerText = '1 item selected';
+          selName.style.display = '';
+          selName.innerText = fileName;
+          selPath.innerText = filePath && filePath.trim() ? filePath : '(no path)';
+        } else {
+          selSummary.innerText = '(none)';
+          selName.style.display = 'none';
+          selName.innerText = '';
+          selPath.innerText = '(no path)';
+        }
       } catch ( e ) {
         // ignore if globals not yet available
       }
@@ -56,8 +84,9 @@
     const btnDelete = document.querySelector( '#btn-delete' );
     async function updateDeleteState () {
       try {
+        const count = Number( await ahk.global.SelectedCount ) || 0;
         const filePath = await ahk.global.SelectedFilePath;
-        btnDelete.disabled = !( filePath && filePath.trim() );
+        btnDelete.disabled = !( count > 0 || ( filePath && filePath.trim() ) );
       } catch { }
     }
     await updateDeleteState();
