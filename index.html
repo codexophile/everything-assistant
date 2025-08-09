@@ -40,25 +40,44 @@
         const filePath = await ahk.global.SelectedFilePath;
         const namesAll = ( await ahk.global.SelectedNames ) || '';
         const count = Number( await ahk.global.SelectedCount ) || 0;
+        const folderChain = ( await ahk.global.SelectedFolderPaths ) || '';
         const selSummary = document.querySelector( '#sel-summary' );
         const selName = document.querySelector( '#sel-name' );
         const selPath = document.querySelector( '#sel-path' );
+        const actions = document.querySelector( '#file-actions' );
 
         if ( count > 1 ) {
           selSummary.innerText = `${ count } items selected`;
           selName.style.display = '';
           selName.innerText = namesAll.split( '\n' ).slice( 0, 10 ).join( '\n' );
           selPath.innerText = '(multiple paths)';
+          // For multi-select, clear folder chain display
+          actions.innerHTML = '';
         } else if ( count === 1 || ( fileName && fileName.trim() ) ) {
           selSummary.innerText = '1 item selected';
           selName.style.display = '';
           selName.innerText = fileName;
           selPath.innerText = filePath && filePath.trim() ? filePath : '(no path)';
+          // Render parent-to-root folder chain
+          const items = folderChain ? folderChain.split( '\n' ) : [];
+          if ( items.length ) {
+            const list = document.createElement( 'div' );
+            list.style.fontFamily = 'Consolas, monospace';
+            list.style.fontSize = '12px';
+            list.style.color = '#333';
+            list.style.whiteSpace = 'pre-line';
+            list.textContent = items.join( '\n' );
+            actions.innerHTML = '';
+            actions.appendChild( list );
+          } else {
+            actions.innerHTML = '';
+          }
         } else {
           selSummary.innerText = '(none)';
           selName.style.display = 'none';
           selName.innerText = '';
           selPath.innerText = '(no path)';
+          actions.innerHTML = '';
         }
       } catch ( e ) {
         // ignore if globals not yet available

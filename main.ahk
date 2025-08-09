@@ -14,6 +14,8 @@ LastSelectedName := ""
 ; Multi-select support
 SelectedNames := "" ; Newline-delimited names from Everything list view
 SelectedCount := 0
+; Folder chain (parent -> root) for the current single selection
+SelectedFolderPaths := ""
 
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
@@ -23,7 +25,7 @@ SetTimer(CheckEverythingActive, 100)
 
 CheckEverythingActive() {
   global AssistantGui, SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
-  global SelectedNames, SelectedCount
+  global SelectedNames, SelectedCount, SelectedFolderPaths
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
 
@@ -41,6 +43,16 @@ CheckEverythingActive() {
         SelectedFileName := currName
         SelectedNames := SelectedName
         SelectedCount := currCount
+        ; Update folder chain only for single-selection with a valid path
+        SelectedFolderPaths := ""
+        if ((SelectedCount = 1) && (SelectedFilePath != "")) {
+          folders := GetFoldersFullPaths(SelectedFilePath)
+          chain := ""
+          for _, fPath in folders {
+            chain .= (chain = "" ? "" : "`n") . fPath
+          }
+          SelectedFolderPaths := chain
+        }
         LastSelectedPath := currPath
         LastSelectedName := currName
         ; Notify webview to update its UI from ahk.global variables
@@ -52,6 +64,7 @@ CheckEverythingActive() {
         SelectedFileName := ""
         SelectedNames := ""
         SelectedCount := 0
+        SelectedFolderPaths := ""
         LastSelectedPath := ""
         LastSelectedName := ""
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
