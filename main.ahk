@@ -114,7 +114,10 @@ ExcludeFolders() {
     return
   }
   curr := ControlGetText("Edit1", EverythingWindowTitle)
-  if !InStr(curr, "!folder:") {
+  if InStr(curr, "!folder:") {
+    ; Remove '!folder:' if present
+    newText := StrReplace(curr, "!folder:")
+  } else {
     currTrim := Trim(curr)
     if (currTrim = "") {
       newText := "!folder:"
@@ -122,6 +125,6 @@ ExcludeFolders() {
       ; ensure a space before appending if needed
       newText := RegExMatch(curr, "\s$") ? curr . "!folder:" : curr . " !folder:"
     }
-    ControlSetText(newText, "Edit1", EverythingWindowTitle)
   }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
 }
