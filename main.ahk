@@ -70,3 +70,27 @@ GetFoldersFullPaths(OriginalPath, FolderPaths := []) {
 SubmitForm(data) {
   MsgBox data.toSend
 }
+
+; Delete currently selected files in Everything by simulating Delete key.
+; Safety: ensures Everything window is active before sending Delete.
+DeleteSelected() {
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  WinActivate EverythingWindowTitle
+  WinWaitActive EverythingWindowTitle, , 1
+  if !WinActive(EverythingWindowTitle) {
+    MsgBox "Couldn't activate Everything."
+    return
+  }
+  ; Optional: Confirm if nothing selected
+  StatusText := StatusBarGetText(, EverythingWindowTitle)
+  FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
+  if (!FileSelected) {
+    MsgBox "No items selected to delete."
+    return
+  }
+  ; Send Delete to Everything; Everything will handle multi-select deletion
+  Send "{Delete}"
+}

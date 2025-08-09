@@ -11,6 +11,7 @@
 
 <body>
   <div id="main-toolbar">
+    <button id="btn-delete" title="Delete selected files">Delete</button>
   </div>
   <hr />
   <div id="file-info">
@@ -50,6 +51,30 @@
     // Initial render and expose updater for AHK to call
     await renderSelection();
     window.updateSelectedFromAhk = renderSelection;
+
+    // Enable/disable delete button based on selection and wire click
+    const btnDelete = document.querySelector( '#btn-delete' );
+    async function updateDeleteState () {
+      try {
+        const filePath = await ahk.global.SelectedFilePath;
+        btnDelete.disabled = !( filePath && filePath.trim() );
+      } catch { }
+    }
+    await updateDeleteState();
+    // Reuse existing updater to also update button state
+    const oldUpdater = window.updateSelectedFromAhk;
+    window.updateSelectedFromAhk = async function () {
+      await oldUpdater();
+      await updateDeleteState();
+    };
+
+    btnDelete.addEventListener( 'click', async () => {
+      try {
+        await ahk.global.DeleteSelected();
+      } catch ( e ) {
+        console.error( 'DeleteSelected failed', e );
+      }
+    } );
   </script>
 </body>
 
