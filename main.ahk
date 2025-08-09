@@ -141,3 +141,30 @@ ExcludeFolders() {
   }
   ControlSetText(newText, "Edit1", EverythingWindowTitle)
 }
+
+; Toggle exclusion of a specific folder path in the Everything search box
+ToggleExcludeFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  ; Normalize path for exclusion syntax (remove trailing backslash)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  excl := '!"' . folder . ':'
+  if InStr(curr, excl) {
+    ; Remove exclusion
+    newText := StrReplace(curr, excl)
+  } else {
+    currTrim := Trim(curr)
+    if (currTrim = "") {
+      newText := excl
+    } else {
+      newText := RegExMatch(curr, "\s$") ? curr . excl : curr . " " . excl
+    }
+  }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}

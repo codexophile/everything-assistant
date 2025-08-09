@@ -61,14 +61,51 @@
           // Render parent-to-root folder chain
           const items = folderChain ? folderChain.split( '\n' ) : [];
           if ( items.length ) {
-            const list = document.createElement( 'div' );
-            list.style.fontFamily = 'Consolas, monospace';
-            list.style.fontSize = '12px';
-            list.style.color = '#333';
-            list.style.whiteSpace = 'pre-line';
-            list.textContent = items.join( '\n' );
             actions.innerHTML = '';
-            actions.appendChild( list );
+            const btns = document.createElement( 'div' );
+            btns.style.display = 'flex';
+            btns.style.flexDirection = 'column';
+            btns.style.gap = '2px';
+            // Helper to check if exclusion is present in search box
+            async function isExcluded ( folder ) {
+              const curr = await ahk.getControlText( 'Edit1', 'ahk_class EVERYTHING_(1.5a)' );
+              const excl = `!"${ folder }:`;
+              return curr && curr.includes( excl );
+            }
+            // For each folder, create a button
+            items.forEach( ( folder ) => {
+              const btn = document.createElement( 'button' );
+              btn.textContent = folder;
+              btn.style.fontFamily = 'Consolas, monospace';
+              btn.style.fontSize = '12px';
+              btn.style.textAlign = 'left';
+              btn.style.overflow = 'hidden';
+              btn.style.textOverflow = 'ellipsis';
+              btn.title = `Toggle exclusion for ${ folder }`;
+              // Set initial state
+              ( async () => {
+                if ( await isExcluded( folder ) ) {
+                  btn.classList.add( 'excluded' );
+                  btn.style.background = '#fdd';
+                } else {
+                  btn.classList.remove( 'excluded' );
+                  btn.style.background = '';
+                }
+              } )();
+              btn.addEventListener( 'click', async () => {
+                await ahk.global.ToggleExcludeFolder( folder );
+                // Update button state after toggling
+                if ( await isExcluded( folder ) ) {
+                  btn.classList.add( 'excluded' );
+                  btn.style.background = '#fdd';
+                } else {
+                  btn.classList.remove( 'excluded' );
+                  btn.style.background = '';
+                }
+              } );
+              btns.appendChild( btn );
+            } );
+            actions.appendChild( btns );
           } else {
             actions.innerHTML = '';
           }
