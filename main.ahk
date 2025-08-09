@@ -67,15 +67,6 @@ GetFoldersFullPaths(OriginalPath, FolderPaths := []) {
 ; MsgBox(Text)
 ; ControlSetText("Test", "Edit1", "ahk_class EVERYTHING_(1.5a)")
 
-Button1() {
-  AssistantGui.ExecuteScriptAsync("alert('hi')")
-  MsgBox "You clicked button 1"
-}
-
-Button2() {
-  MsgBox "You clicked button 2"
-}
-
 SubmitForm(data) {
   MsgBox data.toSend
 }
