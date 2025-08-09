@@ -1,14 +1,38 @@
 #Requires AutoHotkey v2.0
 #Include ..\#lib\WebViewToo\WebViewToo.ahk
 
-MainWindow := WebViewGui("Resize")
+EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
+AssistantWindowTitle := "Everything Assistant"
+MainWidth := 300
 
-MainWindow := WebViewGui("Resize")
-MainWindow.Navigate "index.html"
-MainWindow.Show "w800 h600"
+AssistantGui := WebViewGui("Resize AlwaysOnTop")
+AssistantGui.Title := AssistantWindowTitle
+AssistantGui.Navigate "index.html"
+
+SetTimer(CheckEverythingActive, 100)
+
+CheckEverythingActive() {
+  if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
+    AssistantGui.Show("w300 h300 NoActivate")
+  } else {
+    AssistantGui.Hide()
+  }
+}
+
+GetFoldersFullPaths(OriginalPath, FolderPaths := []) {
+  FolderPaths.Push(OriginalPath)
+  SplitPath(OriginalPath, , &ParentFolder)
+  if (OriginalPath = ParentFolder || ParentFolder = "")
+    return FolderPaths
+  return GetFoldersFullPaths(ParentFolder, FolderPaths)
+}
+
+; Text := ControlGetText("Edit1", "ahk_class EVERYTHING_(1.5a)")
+; MsgBox(Text)
+; ControlSetText("Test", "Edit1", "ahk_class EVERYTHING_(1.5a)")
 
 Button1() {
-  MainWindow.ExecuteScriptAsync("alert('hi')")
+  AssistantGui.ExecuteScriptAsync("alert('hi')")
   MsgBox "You clicked button 1"
 }
 
