@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
 #Include ..\#lib\WebViewToo\WebViewToo.ahk
 
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
@@ -12,8 +13,19 @@ AssistantGui.Navigate "index.html"
 SetTimer(CheckEverythingActive, 100)
 
 CheckEverythingActive() {
+
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
+
+    StatusText := StatusBarGetText(, EverythingWindowTitle)
+    FileSelected := RegExMatch(StatusText, "   \|   Path: (.+)", &Path)
+    SelectedFileName := ListViewGetContent("Selected Col1", "SysListView321", "ahk_class EVERYTHING_(1.5a)")
+
+    if (FileSelected) {
+
+    }
+
     AssistantGui.Show("w300 h300 NoActivate")
+
   } else {
     AssistantGui.Hide()
   }
