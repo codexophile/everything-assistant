@@ -20,6 +20,7 @@
   <div id="main-toolbar">
     <button id="btn-delete" title="Delete selected files">Delete</button>
   </div>
+  <div id="secondary-toolbar"></div>
   <hr />
   <div id="file-info">
     <strong>Selection:</strong>
@@ -75,6 +76,22 @@
         // ignore if globals not yet available
       }
     }
+
+    // Wire up secondary toolbar: Exclude Folders
+    const secondary = document.querySelector('#secondary-toolbar');
+    const btnExclude = document.createElement('button');
+    btnExclude.id = 'btn-exclude-folders';
+    btnExclude.title = 'Exclude folders (!folder:)';
+    btnExclude.textContent = 'Exclude Folders';
+    secondary.appendChild(btnExclude);
+
+    btnExclude.addEventListener('click', async () => {
+      try {
+        await ahk.global.ExcludeFolders();
+      } catch (e) {
+        console.error('ExcludeFolders failed', e);
+      }
+    });
 
     // Initial render and expose updater for AHK to call
     await renderSelection();

@@ -105,3 +105,23 @@ DeleteSelected() {
   ; Send Delete to Everything; Everything will handle multi-select deletion
   Send "{Delete}"
 }
+
+; Add "!folder:" to the Everything search box (Edit1) to exclude folders from results
+ExcludeFolders() {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  if !InStr(curr, "!folder:") {
+    currTrim := Trim(curr)
+    if (currTrim = "") {
+      newText := "!folder:"
+    } else {
+      ; ensure a space before appending if needed
+      newText := RegExMatch(curr, "\s$") ? curr . "!folder:" : curr . " !folder:"
+    }
+    ControlSetText(newText, "Edit1", EverythingWindowTitle)
+  }
+}
