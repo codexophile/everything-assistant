@@ -78,20 +78,20 @@
     }
 
     // Wire up secondary toolbar: Exclude Folders
-    const secondary = document.querySelector('#secondary-toolbar');
-    const btnExclude = document.createElement('button');
+    const secondary = document.querySelector( '#secondary-toolbar' );
+    const btnExclude = document.createElement( 'button' );
     btnExclude.id = 'btn-exclude-folders';
     btnExclude.title = 'Exclude folders (!folder:)';
     btnExclude.textContent = 'Exclude Folders';
-    secondary.appendChild(btnExclude);
+    secondary.appendChild( btnExclude );
 
-    btnExclude.addEventListener('click', async () => {
+    btnExclude.addEventListener( 'click', async () => {
       try {
         await ahk.global.ExcludeFolders();
-      } catch (e) {
-        console.error('ExcludeFolders failed', e);
+      } catch ( e ) {
+        console.error( 'ExcludeFolders failed', e );
       }
-    });
+    } );
 
     // Initial render and expose updater for AHK to call
     await renderSelection();
