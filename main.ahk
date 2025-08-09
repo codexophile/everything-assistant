@@ -154,7 +154,7 @@ ToggleExcludeFolder(folderPath) {
   folder := folderPath
   if (SubStr(folder, -1) = "\\")
     folder := SubStr(folder, 1, -1)
-  excl := '!"' . folder . ':'
+  excl := '!"' . folder . '"'
   if InStr(curr, excl) {
     ; Remove exclusion
     newText := StrReplace(curr, excl)
