@@ -232,6 +232,12 @@
           const chip = document.createElement( 'span' );
           chip.className = 'tag-chip';
           chip.textContent = t;
+          chip.style.cursor = 'pointer';
+          chip.title = `Search for [${ t }]`;
+          chip.addEventListener( 'click', ( e ) => {
+            // Open Everything search with es: protocol and [tagName]
+            window.open( `es:[${ t }]`, '_blank' );
+          } );
           els.tags.appendChild( chip );
         }
         els.tagsContainer.style.display = '';
