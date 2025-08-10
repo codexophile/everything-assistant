@@ -73,6 +73,7 @@
     <div id="sel-summary">(none)</div>
     <div id="sel-name" class="mono" style="display:none"></div>
     <div id="sel-path" class="mono mono-dim">(no path)</div>
+    <div id="tags"></div>
   </div>
   <hr />
   <div id="file-actions">
@@ -203,7 +204,6 @@
       }
       // Return unique tags sorted alphabetically
       const output = Array.from( counts.keys() ).sort( ( a, b ) => a.localeCompare( b ) );
-      console.log( output );
       return output;
     }
     function renderTags ( tags ) {
