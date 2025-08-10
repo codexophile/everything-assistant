@@ -89,16 +89,62 @@
       btns.style.flexDirection = 'column';
       btns.style.gap = '2px';
       items.forEach( ( folder ) => {
-        const btn = document.createElement( 'button' );
-        btn.className = 'folder-btn';
-        btn.textContent = folder;
-        btn.title = `Toggle exclusion for ${ folder }`;
-        ( async () => setExcludedStyle( btn, await isExcluded( folder ) ) )();
-        btn.addEventListener( 'click', async () => {
+        const row = document.createElement( 'div' );
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '8px';
+
+        // Folder path label
+        const folderLabel = document.createElement( 'span' );
+        folderLabel.className = 'mono';
+        folderLabel.textContent = folder;
+        row.appendChild( folderLabel );
+
+        // Buttons container
+        const btnGroup = document.createElement( 'span' );
+        btnGroup.style.display = 'flex';
+        btnGroup.style.gap = '4px';
+
+        // Exclude button
+        const btnExclude = document.createElement( 'button' );
+        btnExclude.className = 'folder-btn';
+        btnExclude.textContent = 'Exclude';
+        btnExclude.title = `Toggle exclusion for ${ folder }`;
+        ( async () => setExcludedStyle( btnExclude, await isExcluded( folder ) ) )();
+        btnExclude.addEventListener( 'click', async () => {
           await ahk.global.ToggleExcludeFolder( folder );
-          setExcludedStyle( btn, await isExcluded( folder ) );
+          setExcludedStyle( btnExclude, await isExcluded( folder ) );
         } );
-        btns.appendChild( btn );
+
+        // Search-only button
+        const btnOnly = document.createElement( 'button' );
+        btnOnly.className = 'folder-btn only';
+        btnOnly.textContent = 'Only';
+        btnOnly.title = `Toggle search only in ${ folder }`;
+        btnOnly.dataset.active = 'false';
+        function setOnlyStyle ( active ) {
+          btnOnly.style.background = active ? '#dfd' : '';
+        }
+        btnOnly.addEventListener( 'click', async () => {
+          const isActive = btnOnly.dataset.active === 'true';
+          btnOnly.dataset.active = ( !isActive ).toString();
+          setOnlyStyle( !isActive );
+          if ( !isActive ) {
+            if ( window.ahk?.global?.SetSearchOnlyFolder ) {
+              await ahk.global.SetSearchOnlyFolder( folder );
+            }
+          } else {
+            if ( window.ahk?.global?.ClearSearchOnlyFolder ) {
+              await ahk.global.ClearSearchOnlyFolder( folder );
+            }
+          }
+        } );
+        setOnlyStyle( false );
+
+        btnGroup.appendChild( btnExclude );
+        btnGroup.appendChild( btnOnly );
+        row.appendChild( btnGroup );
+        btns.appendChild( row );
       } );
       els.actions.appendChild( btns );
     }

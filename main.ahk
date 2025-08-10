@@ -1,3 +1,44 @@
+; Restrict search to only a specific folder by appending |folder:"path" to the Everything search box
+SetSearchOnlyFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  ; Normalize path for Everything folder search syntax (remove trailing backslash)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  only := ' |folder:"' . folder . '"'
+  if InStr(curr, only) {
+    ; Already present, do nothing
+    return
+  }
+  currTrim := Trim(curr)
+  if (currTrim = "") {
+    newText := only
+  } else {
+    newText := curr . only
+  }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
+; Remove the |folder:"path" filter for the given folder from the Everything search box
+ClearSearchOnlyFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  only := ' |folder:"' . folder . '"'
+  newText := StrReplace(curr, only)
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 #Include ..\#lib\WebViewToo\WebViewToo.ahk
