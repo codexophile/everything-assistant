@@ -39,6 +39,27 @@
     .folder-btn.excluded {
       background: #fdd;
     }
+
+    /* tags */
+    #tags-container {
+      display: none;
+    }
+
+    #tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tag-chip {
+      font-family: Consolas, monospace;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid #cfe;
+      background: #eef;
+      color: #224;
+    }
   </style>
 </head>
 
@@ -66,8 +87,25 @@
       path: document.querySelector( '#sel-path' ),
       actions: document.querySelector( '#file-actions' ),
       secondary: document.querySelector( '#secondary-toolbar' ),
-      btnDelete: document.querySelector( '#btn-delete' )
+      btnDelete: document.querySelector( '#btn-delete' ),
+      tagsContainer: ( () => {
+        // create Tags section dynamically so we don't disturb layout too much
+        const fileInfo = document.querySelector( '#file-info' );
+        const wrap = document.createElement( 'div' );
+        wrap.id = 'tags-container';
+        const label = document.createElement( 'div' );
+        label.className = 'mono-dim';
+        label.textContent = 'Tags:';
+        const tags = document.createElement( 'div' );
+        tags.id = 'tags';
+        wrap.appendChild( label );
+        wrap.appendChild( tags );
+        fileInfo.after( wrap );
+        return wrap;
+      } )(),
+      tags: null
     };
+    els.tags = document.querySelector( '#tags' );
 
     // Helpers
     const setExcludedStyle = ( btn, excluded ) => {
@@ -149,6 +187,41 @@
       els.actions.appendChild( btns );
     }
 
+    // Tag extraction and rendering
+    function extractTagsFromName ( name ) {
+      if ( !name ) return [];
+      const matches = [ ...name.matchAll( /\[(.+?)\]/g ) ];
+      const tags = matches.map( match => match[ 1 ] );
+      return tags;
+    }
+    function extractTagsFromNamesList ( namesList ) {
+      const counts = new Map();
+      for ( const nm of namesList ) {
+        for ( const t of extractTagsFromName( nm ) ) {
+          counts.set( t, ( counts.get( t ) || 0 ) + 1 );
+        }
+      }
+      // Return unique tags sorted alphabetically
+      const output = Array.from( counts.keys() ).sort( ( a, b ) => a.localeCompare( b ) );
+      console.log( output );
+      return output;
+    }
+    function renderTags ( tags ) {
+      if ( tags && tags.length ) {
+        els.tags.innerHTML = '';
+        for ( const t of tags ) {
+          const chip = document.createElement( 'span' );
+          chip.className = 'tag-chip';
+          chip.textContent = t;
+          els.tags.appendChild( chip );
+        }
+        els.tagsContainer.style.display = '';
+      } else {
+        els.tags.innerHTML = '';
+        els.tagsContainer.style.display = 'none';
+      }
+    }
+
     // Render current selection from AHK globals
     async function renderSelection () {
       try {
@@ -166,6 +239,8 @@
           els.name.innerText = ( namesAll || '' ).split( '\n' ).slice( 0, 10 ).join( '\n' );
           els.path.innerText = '(multiple paths)';
           els.actions.innerHTML = '';
+          const allNames = ( namesAll || '' ).split( '\n' ).filter( Boolean );
+          renderTags( extractTagsFromNamesList( allNames ) );
           return;
         }
         if ( count === 1 || ( fileName && fileName.trim() ) ) {
@@ -175,6 +250,7 @@
           els.path.innerText = filePath && filePath.trim() ? filePath : '(no path)';
           const items = folderChain ? folderChain.split( '\n' ) : [];
           renderFolderButtons( items );
+          renderTags( extractTagsFromNamesList( [ fileName || '' ] ) );
           return;
         }
         // none selected
@@ -183,6 +259,7 @@
         els.name.innerText = '';
         els.path.innerText = '(no path)';
         els.actions.innerHTML = '';
+        renderTags( [] );
       } catch { /* ignore if globals not yet available */ }
     }
 
