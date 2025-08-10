@@ -20,8 +20,6 @@ SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single s
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
-AssistantGui.Expose(SetSearchOnlyFolder)
-AssistantGui.Expose(ClearSearchOnlyFolder)
 
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
