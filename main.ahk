@@ -70,7 +70,7 @@ CheckEverythingActive() {
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
-    AssistantGui.Show("w300 h300 NoActivate")
+    AssistantGui.Show("w600 h600 NoActivate")
   } else {
     AssistantGui.Hide()
   }
