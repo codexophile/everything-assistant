@@ -111,8 +111,23 @@ JoinWithNewlines(arr) {
 ; MsgBox(Text)
 ; ControlSetText("Test", "Edit1", EverythingWindowTitle)
 
-SubmitForm(data) {
-  MsgBox data.toSend
+SendToFileTagger(data) {
+  try {
+    s := ""
+    if IsObject(data) {
+      if data.HasProp("toSend")
+        s := data.toSend
+    } else {
+      s := data
+    }
+    ; Optional: launch external tagger (kept from existing implementation)
+    ; Run with the selected list passed along; if you only want MsgBox, comment the next line.
+    Run "c:\mega\IDEs\Electron\file-tagger\node_modules\electron\dist\electron.exe c:\mega\IDEs\Electron\file-tagger --files-list " .
+      s
+    MsgBox s
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
 }
 
 ; Delete currently selected files in Everything by simulating Delete key.

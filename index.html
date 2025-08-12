@@ -307,10 +307,10 @@
         if ( count > 1 ) {
           const paths = await ahk.global.GetMultipleSelectedFilePaths();
           // Use existing AHK function to display a MsgBox
-          await ahk.global.SubmitForm( { toSend: paths || '' } );
+          await ahk.global.SendToFileTagger( paths || '' );
         } else {
           const path = await ahk.global.GetSingleSelectedFilePath();
-          await ahk.global.SubmitForm( { toSend: path || '' } );
+          await ahk.global.SendToFileTagger( path || '' );
         }
       } catch ( e ) { console.error( 'Tag action failed', e ); }
     } );
