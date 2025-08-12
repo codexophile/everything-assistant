@@ -6,6 +6,7 @@
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
 AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
+FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
 
 ; Globals exposed to the WebView for current selection
 SelectedFilePath := ""
@@ -123,8 +124,8 @@ SendToFileTagger(data) {
     }
     ; Optional: launch external tagger (kept from existing implementation)
     ; Run with the selected list passed along; if you only want MsgBox, comment the next line.
-    Run "c:\mega\IDEs\Electron\file-tagger\node_modules\electron\dist\electron.exe c:\mega\IDEs\Electron\file-tagger --files-list " .
-      '"' s '"'
+    Run FileTaggerPath "node_modules\electron\dist\electron.exe " FileTaggerPath " --files-list " '"' s '"',
+      FileTaggerPath
   } catch as e {
     try MsgBox "(error) " . e.Message
   }
