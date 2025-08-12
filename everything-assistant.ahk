@@ -77,9 +77,10 @@ CheckEverythingActive() {
 }
 
 GetSingleSelectedFilePath() {
+  FileName := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
   status := StatusBarGetText(, EverythingWindowTitle)
   fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
-  currPath := fileSelected ? Path[1] : ""
+  currPath := fileSelected ? Path[1] "\" FileName : ""
   return currPath
 }
 
@@ -123,8 +124,7 @@ SendToFileTagger(data) {
     ; Optional: launch external tagger (kept from existing implementation)
     ; Run with the selected list passed along; if you only want MsgBox, comment the next line.
     Run "c:\mega\IDEs\Electron\file-tagger\node_modules\electron\dist\electron.exe c:\mega\IDEs\Electron\file-tagger --files-list " .
-      s
-    MsgBox s
+      '"' s '"'
   } catch as e {
     try MsgBox "(error) " . e.Message
   }
