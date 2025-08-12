@@ -76,6 +76,21 @@ CheckEverythingActive() {
   }
 }
 
+GetSingleSelectedFilePath() {
+  status := StatusBarGetText(, EverythingWindowTitle)
+  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
+  currPath := fileSelected ? Path[1] : ""
+  return currPath
+}
+
+GetMultipleSelectedFilePaths() {
+  WinActivate(EverythingWindowTitle)
+  A_Clipboard := ""
+  Send "^+c"
+  ClipWait(1)
+  return A_Clipboard
+}
+
 GetFolderChain(originalPath, folderPaths := []) {
   folderPaths.Push(originalPath)
   SplitPath(originalPath, , &parent)
