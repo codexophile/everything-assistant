@@ -20,7 +20,7 @@ SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single s
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
-AssistantGui.Debug()
+; AssistantGui.Debug()
 
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
@@ -49,7 +49,7 @@ CheckEverythingActive() {
         ; Update folder chain only for single-selection with a valid path
         SelectedFolderPaths := ""
         if ((SelectedCount = 1) && (SelectedFilePath != "")) {
-          folders := GetFoldersFullPaths(SelectedFilePath)
+          folders := GetFolderChain(SelectedFilePath)
           SelectedFolderPaths := JoinWithNewlines(folders)
         }
 
@@ -76,12 +76,12 @@ CheckEverythingActive() {
   }
 }
 
-GetFoldersFullPaths(originalPath, folderPaths := []) {
+GetFolderChain(originalPath, folderPaths := []) {
   folderPaths.Push(originalPath)
   SplitPath(originalPath, , &parent)
   if (originalPath = parent || parent = "")
     return folderPaths
-  return GetFoldersFullPaths(parent, folderPaths)
+  return GetFolderChain(parent, folderPaths)
 }
 
 JoinWithNewlines(arr) {
