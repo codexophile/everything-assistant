@@ -32,7 +32,7 @@ CheckEverythingActive() {
   global SelectedNames, SelectedCount, SelectedFolderPaths
   global EverythingWindowTitle, AssistantWindowTitle
 
-  if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) {
+  if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
     status := StatusBarGetText(, EverythingWindowTitle)
     fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
     names := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
