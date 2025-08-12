@@ -43,41 +43,22 @@
     /* tags */
     #tags-container {
       display: none;
-      margin-top: 0.5em;
-      padding: 0.5em 0.8em;
-      background: #f8fafd;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px 0 #0001;
-      border: 1px solid #e0e8ef;
-      max-width: 420px;
     }
 
     #tags {
       display: flex;
-      gap: 8px;
+      gap: 4px;
       flex-wrap: wrap;
-      margin-top: 4px;
     }
 
     .tag-chip {
       font-family: Consolas, monospace;
-      font-size: 12px;
-      padding: 2px 12px;
+      font-size: 11px;
+      padding: 1px 6px;
       border-radius: 999px;
-      border: 1px solid #b3e5fc;
-      background: linear-gradient(90deg, #e3f2fd 60%, #f1f8e9 100%);
-      color: #1565c0;
-      box-shadow: 0 1px 2px 0 #0001;
-      transition: background 0.2s, color 0.2s, border 0.2s;
-      margin-bottom: 2px;
-      cursor: default;
-      user-select: none;
-    }
-
-    .tag-chip:hover {
-      background: #b3e5fc;
-      color: #0d47a1;
-      border-color: #81d4fa;
+      border: 1px solid #cfe;
+      background: #eef;
+      color: #224;
     }
   </style>
 </head>
@@ -85,6 +66,7 @@
 <body>
   <div id="main-toolbar">
     <button id="btn-delete" title="Delete selected files">Delete</button>
+    <button id="btn-tag" title="Tag selected files">Tag</button>
   </div>
   <div id="secondary-toolbar"></div>
   <hr />
@@ -108,6 +90,7 @@
       actions: document.querySelector( '#file-actions' ),
       secondary: document.querySelector( '#secondary-toolbar' ),
       btnDelete: document.querySelector( '#btn-delete' ),
+      btnTag: document.querySelector( '#btn-tag' ),
       tagsContainer: ( () => {
         // create Tags section dynamically so we don't disturb layout too much
         const fileInfo = document.querySelector( '#file-info' );
@@ -232,12 +215,6 @@
           const chip = document.createElement( 'span' );
           chip.className = 'tag-chip';
           chip.textContent = t;
-          chip.style.cursor = 'pointer';
-          chip.title = `Search for [${ t }]`;
-          chip.addEventListener( 'click', ( e ) => {
-            // Open Everything search with es: protocol and [tagName]
-            window.open( `es:[${ t }]`, '_blank' );
-          } );
           els.tags.appendChild( chip );
         }
         els.tagsContainer.style.display = '';
@@ -313,11 +290,37 @@
       try { await ahk.global.DeleteSelected(); } catch ( e ) { console.error( 'DeleteSelected failed', e ); }
     } );
 
+    // Tag button state and action
+    async function updateTagState () {
+      try {
+        const [ countRaw, filePath ] = await Promise.all( [
+          ahk.global.SelectedCount,
+          ahk.global.SelectedFilePath,
+        ] );
+        const count = Number( countRaw ) || 0;
+        els.btnTag.disabled = !( count > 0 || ( filePath && filePath.trim() ) );
+      } catch { /* ignore */ }
+    }
+    els.btnTag.addEventListener( 'click', async () => {
+      try {
+        const count = Number( await ahk.global.SelectedCount ) || 0;
+        if ( count > 1 ) {
+          const paths = await ahk.global.GetMultipleSelectedFilePaths();
+          // Use existing AHK function to display a MsgBox
+          await ahk.global.SubmitForm( { toSend: paths || '' } );
+        } else {
+          const path = await ahk.global.GetSingleSelectedFilePath();
+          await ahk.global.SubmitForm( { toSend: path || '' } );
+        }
+      } catch ( e ) { console.error( 'Tag action failed', e ); }
+    } );
+
     // Initial render and expose updater for AHK to call
     await renderSelection();
     await updateDeleteState();
+    await updateTagState();
     const oldUpdater = renderSelection;
-    window.updateSelectedFromAhk = async () => { await oldUpdater(); await updateDeleteState(); };
+    window.updateSelectedFromAhk = async () => { await oldUpdater(); await updateDeleteState(); await updateTagState(); };
   </script>
 </body>
 
