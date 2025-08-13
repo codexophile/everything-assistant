@@ -73,7 +73,59 @@ CheckEverythingActive() {
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
+  } else if WinActive("ahk_class CabinetWClass") { ; Windows Explorer
+    selectedPaths := Explorer_GetSelected()
+
+    if (selectedPaths != LastSelectedPath) {
+      currCount := (selectedPaths != "") ? StrSplit(selectedPaths, "`n").Length : 0
+      currPath := ""
+      currName := ""
+      names := ""
+
+      if (currCount = 1) {
+        currPath := selectedPaths
+        SplitPath(currPath, &currName)
+        names := currName
+      } else if (currCount > 1) {
+        pathsList := StrSplit(selectedPaths, "`n")
+        namesList := []
+        for path in pathsList {
+          SplitPath(path, &name)
+          namesList.Push(name)
+        }
+        names := JoinWithNewlines(namesList)
+      }
+
+      SelectedFilePath := currPath
+      SelectedFileName := currName
+      SelectedNames := names
+      SelectedCount := currCount
+
+      SelectedFolderPaths := ""
+      if ((SelectedCount = 1) && (SelectedFilePath != "")) {
+        folders := GetFolderChain(SelectedFilePath)
+        SelectedFolderPaths := JoinWithNewlines(folders)
+      }
+
+      LastSelectedPath := selectedPaths
+      LastSelectedName := "" ; Reset this to ensure change detection works across apps
+
+      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+    }
+
+    AssistantGui.Show("w600 h600 NoActivate")
   } else {
+    if (LastSelectedPath != "" || LastSelectedName != "") {
+      ; Clear selection state and notify
+      SelectedFilePath := ""
+      SelectedFileName := ""
+      SelectedNames := ""
+      SelectedCount := 0
+      SelectedFolderPaths := ""
+      LastSelectedPath := ""
+      LastSelectedName := ""
+      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+    }
     AssistantGui.Hide()
   }
 }
@@ -100,13 +152,6 @@ GetFolderChain(originalPath, folderPaths := []) {
   if (originalPath = parent || parent = "")
     return folderPaths
   return GetFolderChain(parent, folderPaths)
-}
-
-JoinWithNewlines(arr) {
-  out := ""
-  for _, v in arr
-    out .= (out = "" ? "" : "`n") . v
-  return out
 }
 
 SendToAvidemux(path) {
@@ -259,4 +304,28 @@ ClearSearchOnlyFolder(folderPath) {
   only := ' |folder:"' . folder . '"'
   newText := StrReplace(curr, only)
   ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
+Explorer_GetSelected() {
+  ID := WinGetID("A")
+  shell := ComObject("Shell.Application")
+  for window in shell.Windows {
+    if (window.HWND = ID) {
+      selectedItems := window.Document.SelectedItems
+      paths := ""
+      for item in selectedItems {
+        paths .= item.Path . "`n"
+      }
+      return Trim(paths, "`n")
+    }
+  }
+  return ""
+}
+
+JoinWithNewlines(arr) {
+  result := ""
+  for i, item in arr {
+    result .= item . (i < arr.Length ? "`n" : "")
+  }
+  return result
 }
