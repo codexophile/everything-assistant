@@ -7,6 +7,7 @@ EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
 AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
+AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
 
 ; Globals exposed to the WebView for current selection
 SelectedFilePath := ""
@@ -108,10 +109,22 @@ JoinWithNewlines(arr) {
   return out
 }
 
-; Debug helpers
-; Text := ControlGetText("Edit1", EverythingWindowTitle)
-; MsgBox(Text)
-; ControlSetText("Test", "Edit1", EverythingWindowTitle)
+SendToAvidemux(path) {
+  global AvidemuxPath
+  try {
+    if (!FileExist(AvidemuxPath)) {
+      MsgBox "Avidemux executable not found: " . AvidemuxPath
+      return
+    }
+    if (!FileExist(path)) {
+      MsgBox "File not found: " . path
+      return
+    }
+    Run '"' . AvidemuxPath . '" "' . path . '"', , "UseErrorLevel"
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
 
 SendToFileTagger(data) {
   try {

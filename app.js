@@ -32,6 +32,8 @@ const Icon = (() => {
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M416 208c0 45.9-14.9 88.3-40 122.7l86.6 86.6c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-86.6-86.6C296.3 401.1 253.9 416 208 416 93.1 416 0 322.9 0 208S93.1 0 208 0s208 93.1 208 208zM80 208c0 70.7 57.3 128 128 128s128-57.3 128-128S278.7 80 208 80 80 137.3 80 208z"/></svg>',
     folderMinus:
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M464 128h-192l-64-64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V176c0-26.5-21.5-48-48-48zM352 304H160c-8.8 0-16-7.2-16-16s7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16z"/></svg>',
+    avidemux:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="16" height="16" fill="currentColor"><path d="M288 32C129.9 32 0 161.9 0 320c0 70.7 57.3 128 128 128h320c70.7 0 128-57.3 128-128C576 161.9 446.1 32 288 32zm0 64c123.7 0 224 100.3 224 224 0 52.9-43.1 96-96 96H160c-52.9 0-96-43.1-96-96 0-123.7 100.3-224 224-224zm0 64c-88.2 0-160 71.8-160 160 0 35.3 28.7 64 64 64h192c35.3 0 64-28.7 64-64 0-88.2-71.8-160-160-160z"/></svg>',
   };
   function setIcon(btn, name, title) {
     if (title) btn.title = title;
@@ -62,6 +64,7 @@ const els = {
   secondary: document.querySelector('#secondary-toolbar'),
   btnDelete: document.querySelector('#btn-delete'),
   btnTag: document.querySelector('#btn-tag'),
+  btnAvidemux: document.querySelector('#btn-avidemux'),
   tagsContainer: (() => {
     // create Tags section dynamically so we don't disturb layout too much
     const fileInfo = document.querySelector('#file-info');
@@ -312,16 +315,39 @@ els.btnTag.addEventListener('click', async () => {
 });
 
 // Initial render and expose updater for AHK to call
+
 // Initialize toolbar icons (works with FA or SVG fallback)
 Icon.setIcon(els.btnDelete, 'trash', 'Delete selected files');
 Icon.setIcon(els.btnTag, 'tag', 'Tag selected files');
+Icon.setIcon(els.btnAvidemux, 'avidemux', 'Send to Avidemux');
+
+// Enable/disable Avidemux button based on selection
+async function updateAvidemuxState() {
+  const count = Number(await ahk.global.SelectedCount) || 0;
+  els.btnAvidemux.disabled = count !== 1;
+}
+
+// Handle click: send to Avidemux if single file selected
+els.btnAvidemux.addEventListener('click', async () => {
+  const count = Number(await ahk.global.SelectedCount) || 0;
+  if (count !== 1) return;
+  const path = await ahk.global.GetSingleSelectedFilePath();
+  // You may want to call an AHK function to send to Avidemux
+  if (window.ahk?.global?.SendToAvidemux) {
+    await ahk.global.SendToAvidemux(path || '');
+  } else {
+    alert('SendToAvidemux function not implemented in AHK.');
+  }
+});
 
 await renderSelection();
 await updateDeleteState();
 await updateTagState();
+await updateAvidemuxState();
 const oldUpdater = renderSelection;
 window.updateSelectedFromAhk = async () => {
   await oldUpdater();
   await updateDeleteState();
   await updateTagState();
+  await updateAvidemuxState();
 };
