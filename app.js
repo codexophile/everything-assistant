@@ -189,6 +189,11 @@ function renderTags(tags) {
       const chip = document.createElement('span');
       chip.className = 'tag-chip';
       chip.textContent = t;
+      chip.title = `Search for tag: ${t}`;
+      chip.style.cursor = 'pointer';
+      chip.addEventListener('click', () => {
+        window.location.href = `es:${encodeURIComponent(`[${t}]`)}`;
+      });
       els.tags.appendChild(chip);
     }
     els.tagsContainer.style.display = '';
