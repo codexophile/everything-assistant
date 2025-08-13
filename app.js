@@ -1,6 +1,15 @@
 // script type="module" so we can use await
 // Icon utilities: prefer Font Awesome if available, else inline SVG fallback
 const Icon = (() => {
+  // Add event listener for reload button
+  window.addEventListener('DOMContentLoaded', () => {
+    const reloadBtn = document.getElementById('btn-reload');
+    if (reloadBtn) {
+      reloadBtn.addEventListener('click', () => {
+        window.ahk.global.reload();
+      });
+    }
+  });
   let faLoaded = null;
   const hasFA = () => {
     if (faLoaded !== null) return faLoaded;

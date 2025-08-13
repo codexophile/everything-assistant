@@ -88,7 +88,12 @@
     <button id="btn-delete" class="icon-btn" title="Delete selected files"></button>
     <button id="btn-tag" class="icon-btn" title="Tag selected files"></button>
     <button id="btn-avidemux" class="icon-btn" title="Send to Avidemux"></button>
+    <!-- Reload button moved out of toolbar for floating placement -->
   </div>
+  <!-- Floating reload button -->
+  <button id="btn-reload" class="icon-btn reload-fab" title="Reload">
+    <i class="fa-solid fa-rotate-right"></i>
+  </button>
   <div id="secondary-toolbar"></div>
   <hr />
   <div id="file-info">
@@ -102,5 +107,36 @@
   </div>
   <script type="module" src="./app.js"></script>
 </body>
+<style>
+  /* Floating reload button styles */
+  .reload-fab {
+    position: fixed;
+    right: 32px;
+    bottom: 32px;
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #4caf50;
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .reload-fab:hover {
+    background: #388e3c;
+  }
+
+  .reload-fab i {
+    font-size: 1.3em;
+    pointer-events: none;
+  }
+</style>
 
 </html>
