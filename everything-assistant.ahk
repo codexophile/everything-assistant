@@ -17,6 +17,7 @@ LastSelectedName := ""
 SelectedNames := ""        ; newline-delimited names from Everything list view
 SelectedCount := 0
 SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single selection
+SelectedChaptersJson := ""  ; JSON array of chapter objects parsed from .ffmetadata (if any)
 
 ; GUI setup
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
@@ -143,7 +144,7 @@ CleanQuery() {
 CheckEverythingActive() {
   global AssistantGui
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
-  global SelectedNames, SelectedCount, SelectedFolderPaths
+  global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson
   global EverythingWindowTitle, AssistantWindowTitle
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
@@ -174,6 +175,15 @@ CheckEverythingActive() {
 
         LastSelectedPath := currPath
         LastSelectedName := currName
+
+        ; Update chapter metadata (only for single selection w/ video file)
+        if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
+          ; In Everything context SelectedFilePath is folder path
+          SelectedChaptersJson := GetChaptersForSelected(SelectedFilePath, SelectedFileName)
+        } else {
+          SelectedChaptersJson := ""
+        }
+
         ; Notify webview to update its UI from ahk.global variables
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
       }
@@ -184,6 +194,7 @@ CheckEverythingActive() {
       SelectedNames := ""
       SelectedCount := 0
       SelectedFolderPaths := ""
+      SelectedChaptersJson := ""
       LastSelectedPath := ""
       LastSelectedName := ""
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
@@ -227,6 +238,15 @@ CheckEverythingActive() {
       LastSelectedPath := selectedPaths
       LastSelectedName := "" ; Reset this to ensure change detection works across apps
 
+      ; Update chapter metadata (only for single selection w/ video file)
+      if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
+        ; In Explorer context SelectedFilePath is full file path; derive folder
+        SplitPath(SelectedFilePath, , &onlyDir)
+        SelectedChaptersJson := GetChaptersForSelected(onlyDir, SelectedFileName)
+      } else {
+        SelectedChaptersJson := ""
+      }
+
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
@@ -241,6 +261,7 @@ CheckEverythingActive() {
       SelectedFolderPaths := ""
       LastSelectedPath := ""
       LastSelectedName := ""
+      SelectedChaptersJson := ""
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
     AssistantGui.Hide()
@@ -353,4 +374,112 @@ JoinWithNewlines(arr) {
     result .= item . (i < arr.Length ? "`n" : "")
   }
   return result
+}
+
+; =========================
+; Chapter (.ffmetadata) support
+; =========================
+
+IsVideoFile(ext) {
+  extLower := StrLower(ext)
+  for , v in ["mp4", "mkv", "mov", "avi", "webm", "m4v"] {
+    if (extLower = v)
+      return true
+  }
+  return false
+}
+
+GetChaptersForSelected(folderPath, fileName) {
+  try {
+    if (folderPath = "" || fileName = "")
+      return ""
+    SplitPath(fileName, , , &ext, &nameNoExt)
+    if !IsVideoFile(ext)
+      return ""
+    metaFile := folderPath "\" nameNoExt "." ext ".ffmetadata"
+    if !FileExist(metaFile)
+      return ""
+    return ParseFFMetadata(metaFile)
+  } catch {
+    return ""
+  }
+}
+
+JsonEscape(str) {
+  if (str = "")
+    return ""
+  ; Escape backslash and quotes, and control chars
+  str := StrReplace(str, "\", "\\")
+  str := StrReplace(str, '"', '\"')
+  str := StrReplace(str, "`r", "")
+  str := StrReplace(str, "`n", '\n')
+  return str
+}
+
+FormatTimecode(seconds) {
+  if (seconds = "" || seconds < 0)
+    return "00:00:00.000"
+  totalMs := Round(seconds * 1000)
+  ms := Mod(totalMs, 1000)
+  totalSec := (totalMs - ms) / 1000
+  s := Mod(totalSec, 60)
+  totalMin := (totalSec - s) / 60
+  m := Mod(totalMin, 60)
+  h := (totalMin - m) / 60
+  return Format("{:02}:{:02}:{:02}.{:03}", h, m, s, ms)
+}
+
+ParseFFMetadata(filePath) {
+  chapters := []
+  current := Map()
+  try {
+    for line in StrSplit(FileRead(filePath, "UTF-8"), "`n") {
+      line := Trim(line)
+      if (line = "" || SubStr(line, 1, 1) = ";")
+        continue
+      if (line = "[CHAPTER]") {
+        if (current.Count) {
+          chapters.Push(current)
+          current := Map()
+        }
+        continue
+      }
+      if RegExMatch(line, "^([^=]+)=(.*)$", &m) {
+        key := StrLower(Trim(m[1]))
+        val := Trim(m[2])
+        current[key] := val
+      }
+    }
+    if (current.Count)
+      chapters.Push(current)
+  } catch {
+    return ""
+  }
+  if (chapters.Length = 0)
+    return ""
+  ; Build JSON
+  json := "["
+  for idx, ch in chapters {
+    startRaw := ch.Has("start") ? ch["start"] : "0"
+    endRaw := ch.Has("end") ? ch["end"] : "0"
+    startNum := startRaw + 0
+    endNum := endRaw + 0
+    ; Assume nanoseconds -> seconds
+    startSec := startNum / 1000000000
+    endSec := endNum / 1000000000
+    obj := '{' .
+      '"start":"' JsonEscape(startRaw) '",' .
+      '"end":"' JsonEscape(endRaw) '",' .
+      '"startSeconds":' startSec ',' .
+      '"endSeconds":' endSec ',' .
+      '"startTimecode":"' JsonEscape(FormatTimecode(startSec)) '",' .
+      '"endTimecode":"' JsonEscape(FormatTimecode(endSec)) '",' .
+      '"title":"' JsonEscape(ch.Has("title") ? ch["title"] : "") '",' .
+      '"thumbnail":"' JsonEscape(ch.Has("thumbnail") ? ch["thumbnail"] : "") '"' .
+      '}'
+    json .= obj . (idx < chapters.Length ? "," : "")
+  }
+  json .= "]"
+  ; A_Clipboard := json
+  return json
 }

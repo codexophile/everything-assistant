@@ -92,6 +92,8 @@ const els = {
   tags: null,
 };
 els.tags = document.querySelector('#tags');
+els.chaptersSection = document.querySelector('#chapters-section');
+els.chaptersList = document.querySelector('#chapters-list');
 
 // Helpers
 const setExcludedStyle = (btn, excluded) => {
@@ -218,13 +220,14 @@ function renderTags(tags) {
 // Render current selection from AHK globals
 async function renderSelection() {
   try {
-    const [fileName, filePath, namesAll, countRaw, folderChain] =
+    const [fileName, filePath, namesAll, countRaw, folderChain, chaptersJson] =
       await Promise.all([
         ahk.global.SelectedFileName,
         ahk.global.SelectedFilePath,
         ahk.global.SelectedNames,
         ahk.global.SelectedCount,
         ahk.global.SelectedFolderPaths,
+        ahk.global.SelectedChaptersJson,
       ]);
     const count = Number(countRaw) || 0;
     if (count > 1) {
@@ -235,6 +238,7 @@ async function renderSelection() {
       els.actions.innerHTML = '';
       const allNames = (namesAll || '').split('\n').filter(Boolean);
       renderTags(extractTagsFromNamesList(allNames));
+      renderChapters(null);
       return;
     }
     if (count === 1 || (fileName && fileName.trim())) {
@@ -245,6 +249,7 @@ async function renderSelection() {
       const items = folderChain ? folderChain.split('\n') : [];
       renderFolderButtons(items);
       renderTags(extractTagsFromNamesList([fileName || '']));
+      renderChapters(chaptersJson);
       return;
     }
     // none selected
@@ -254,6 +259,7 @@ async function renderSelection() {
     els.path.innerText = '(no path)';
     els.actions.innerHTML = '';
     renderTags([]);
+    renderChapters(null);
   } catch {
     /* ignore if globals not yet available */
   }
@@ -370,3 +376,50 @@ window.updateSelectedFromAhk = async () => {
   await updateTagState();
   await updateAvidemuxState();
 };
+
+// Chapters rendering
+function renderChapters(chaptersJson) {
+  if (!els.chaptersSection || !els.chaptersList) return;
+  if (!chaptersJson) {
+    els.chaptersSection.style.display = 'none';
+    els.chaptersList.innerHTML = '';
+    return;
+  }
+  let chapters = [];
+  try {
+    chapters = JSON.parse(chaptersJson);
+  } catch (err) {
+    console.log(err);
+    chapters = [];
+  }
+  console.log(chapters);
+  if (!Array.isArray(chapters) || !chapters.length) {
+    els.chaptersSection.style.display = 'none';
+    els.chaptersList.innerHTML = '';
+    return;
+  }
+  els.chaptersSection.style.display = '';
+  els.chaptersList.innerHTML = '';
+  chapters.forEach((ch, idx) => {
+    const row = document.createElement('div');
+    row.className = 'chapter-row';
+    if (ch.thumbnail) {
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.src = ch.thumbnail;
+      img.alt = ch.title || `Chapter ${idx + 1}`;
+      row.appendChild(img);
+    }
+    const txt = document.createElement('div');
+    txt.className = 'chap-text';
+    const title = document.createElement('div');
+    title.textContent = ch.title || `Chapter ${idx + 1}`;
+    const time = document.createElement('div');
+    time.style.color = '#555';
+    time.textContent = `${ch.startTimecode || ''} - ${ch.endTimecode || ''}`;
+    txt.appendChild(title);
+    txt.appendChild(time);
+    row.appendChild(txt);
+    els.chaptersList.appendChild(row);
+  });
+}

@@ -105,6 +105,12 @@
   <hr />
   <div id="file-actions">
   </div>
+  <hr />
+  <div id="chapters-section" style="display:none">
+    <div class="mono-dim">Chapters:</div>
+    <div id="chapters-list" class="mono"
+      style="font-size:11px; max-height:200px; overflow:auto; display:flex; flex-direction:column; gap:4px;"></div>
+  </div>
   <script type="module" src="./app.js"></script>
 </body>
 <style>
@@ -136,6 +142,25 @@
   .reload-fab i {
     font-size: 1.3em;
     pointer-events: none;
+  }
+
+  #chapters-list .chapter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  #chapters-list img {
+    width: 72px;
+    height: 40px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+  }
+
+  #chapters-list .chap-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
   }
 </style>
 
