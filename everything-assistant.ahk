@@ -34,7 +34,11 @@ CheckEverythingActive() {
   global EverythingWindowTitle, AssistantWindowTitle
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
-    status := StatusBarGetText(, EverythingWindowTitle)
+    try {
+      status := StatusBarGetText(, EverythingWindowTitle)
+    } catch {
+      return
+    }
     fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
     names := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
     currCount := (names && names != "") ? StrSplit(names, "`n").Length : 0
