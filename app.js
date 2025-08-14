@@ -392,7 +392,7 @@ function renderChapters(chaptersJson) {
     console.log(err);
     chapters = [];
   }
-  console.log(chapters);
+  console.log('Chapters data:', chapters);
   if (!Array.isArray(chapters) || !chapters.length) {
     els.chaptersSection.style.display = 'none';
     els.chaptersList.innerHTML = '';
@@ -403,11 +403,33 @@ function renderChapters(chaptersJson) {
   chapters.forEach((ch, idx) => {
     const row = document.createElement('div');
     row.className = 'chapter-row';
-    if (ch.thumbnail) {
+    console.log(
+      `Chapter ${idx + 1} thumbnail:`,
+      ch.thumbnail ? `${ch.thumbnail.substring(0, 50)}...` : 'none'
+    );
+    if (ch.thumbnail && ch.thumbnail.trim() !== '') {
       const img = document.createElement('img');
       img.loading = 'lazy';
-      img.src = ch.thumbnail;
+      img.src = ch.thumbnail; // Now contains base64 data URL
       img.alt = ch.title || `Chapter ${idx + 1}`;
+      // Add error handling for failed image loads
+      img.onerror = function () {
+        console.warn(
+          'Failed to load thumbnail for chapter:',
+          ch.title || `Chapter ${idx + 1}`
+        );
+        console.warn(
+          'Thumbnail data starts with:',
+          ch.thumbnail ? ch.thumbnail.substring(0, 100) : 'empty'
+        );
+        this.style.display = 'none';
+      };
+      img.onload = function () {
+        console.log(
+          'Successfully loaded thumbnail for chapter:',
+          ch.title || `Chapter ${idx + 1}`
+        );
+      };
       row.appendChild(img);
     }
     const txt = document.createElement('div');

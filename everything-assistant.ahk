@@ -389,6 +389,46 @@ IsVideoFile(ext) {
   return false
 }
 
+; Convert image file to base64 data URL (COM-based, avoids Crypt32 quirks)
+FileToBase64(filePath) {
+  try {
+    if (!filePath || !FileExist(filePath))
+      return ""
+    ; Use ADODB.Stream to read binary
+    stream := ComObject("ADODB.Stream")
+    stream.Type := 1  ; binary
+    stream.Open()
+    stream.LoadFromFile(filePath)
+    ; Read bytes into a safe variant then encode via XML DOM Base64
+    bytes := stream.Read()
+    stream.Close()
+    xml := ComObject("MSXML2.DOMDocument.6.0")
+    node := xml.createElement("b64")
+    node.dataType := "bin.base64"
+    node.nodeTypedValue := bytes
+    base64 := RegExReplace(node.text, "[\r\n]")
+    SplitPath(filePath, , , &ext)
+    mime := "image/jpeg"
+    if ext {
+      e := StrLower(ext)
+      if (e = "png")
+        mime := "image/png"
+      else if (e = "gif")
+        mime := "image/gif"
+      else if (e = "webp")
+        mime := "image/webp"
+      else if (e = "bmp")
+        mime := "image/bmp"
+      else if (e = "svg")
+        mime := "image/svg+xml"
+    }
+    return base64 ? ("data:" mime ";base64," base64) : ""
+  } catch as err {
+    OutputDebug "[EverythingAssistant] FileToBase64 COM error: " err.Message
+    return ""
+  }
+}
+
 GetChaptersForSelected(folderPath, fileName) {
   try {
     if (folderPath = "" || fileName = "")
@@ -412,7 +452,8 @@ JsonEscape(str) {
   str := StrReplace(str, "\", "\\")
   str := StrReplace(str, '"', '\"')
   str := StrReplace(str, "`r", "")
-  str := StrReplace(str, "`n", '\n')
+  str := StrReplace(str, "`n", "\\n")
+  str := StrReplace(str, "`t", "\\t")
   return str
 }
 
@@ -467,6 +508,20 @@ ParseFFMetadata(filePath) {
     ; Assume nanoseconds -> seconds
     startSec := startNum / 1000000000
     endSec := endNum / 1000000000
+
+    ; Convert thumbnail file path to base64 data URL
+    thumbnailBase64 := ""
+    if (ch.Has("thumbnail") && ch["thumbnail"] != "") {
+      thumbnailPath := ch["thumbnail"]
+      if (!InStr(thumbnailPath, ":") && !SubStr(thumbnailPath, 1, 1) = "\") {
+        SplitPath(filePath, , &metaDir)
+        thumbnailPath := metaDir "\" thumbnailPath
+      }
+      thumbnailBase64 := FileToBase64(thumbnailPath)
+      if (thumbnailBase64 = "")
+        OutputDebug "[EverythingAssistant] Thumbnail conversion failed: " thumbnailPath
+    }
+
     obj := '{' .
       '"start":"' JsonEscape(startRaw) '",' .
       '"end":"' JsonEscape(endRaw) '",' .
@@ -475,7 +530,7 @@ ParseFFMetadata(filePath) {
       '"startTimecode":"' JsonEscape(FormatTimecode(startSec)) '",' .
       '"endTimecode":"' JsonEscape(FormatTimecode(endSec)) '",' .
       '"title":"' JsonEscape(ch.Has("title") ? ch["title"] : "") '",' .
-      '"thumbnail":"' JsonEscape(ch.Has("thumbnail") ? ch["thumbnail"] : "") '"' .
+      '"thumbnail":"' JsonEscape(thumbnailBase64) '"' .
       '}'
     json .= obj . (idx < chapters.Length ? "," : "")
   }
