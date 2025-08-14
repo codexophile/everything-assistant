@@ -27,7 +27,7 @@ SelectedChaptersJson := ""  ; JSON array of chapter objects parsed from .ffmetad
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
-; AssistantGui.Debug()
+AssistantGui.Debug()
 
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
