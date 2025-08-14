@@ -31,6 +31,98 @@ SetTimer(CheckEverythingActive, 100)
 
 ;  MARK: Query related
 
+; Add "!folder:" to the Everything search box (Edit1) to exclude folders from results
+ExcludeFolders() {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  if InStr(curr, "!folder:") {
+    ; Remove '!folder:' if present
+    newText := StrReplace(curr, "!folder:")
+  } else {
+    currTrim := Trim(curr)
+    if (currTrim = "") {
+      newText := "!folder:"
+    } else {
+      ; ensure a space before appending if needed
+      newText := RegExMatch(curr, "\s$") ? curr . "!folder:" : curr . " !folder:"
+    }
+  }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
+; Toggle exclusion of a specific folder path in the Everything search box
+ToggleExcludeFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  ; Normalize path for exclusion syntax (remove trailing backslash)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  excl := '!"' . folder . '"'
+  if InStr(curr, excl) {
+    ; Remove exclusion
+    newText := StrReplace(curr, excl)
+  } else {
+    currTrim := Trim(curr)
+    if (currTrim = "") {
+      newText := excl
+    } else {
+      newText := RegExMatch(curr, "\s$") ? curr . excl : curr . " " . excl
+    }
+  }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
+; Restrict search to only a specific folder by appending |folder:"path" to the Everything search box
+SetSearchOnlyFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  ; Normalize path for Everything folder search syntax (remove trailing backslash)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  only := ' "' . folder . '"'
+  if InStr(curr, only) {
+    ; Already present, do nothing
+    return
+  }
+  currTrim := Trim(curr)
+  if (currTrim = "") {
+    newText := only
+  } else {
+    newText := curr . only
+  }
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
+; Remove the |folder:"path" filter for the given folder from the Everything search box
+ClearSearchOnlyFolder(folderPath) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  folder := folderPath
+  if (SubStr(folder, -1) = "\\")
+    folder := SubStr(folder, 1, -1)
+  only := ' |folder:"' . folder . '"'
+  newText := StrReplace(curr, only)
+  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+}
+
 CleanQuery() {
   global EverythingWindowTitle
   if !WinExist(EverythingWindowTitle) {
@@ -237,98 +329,6 @@ DeleteSelected() {
   }
   ; Send Delete to Everything; Everything will handle multi-select deletion
   Send "{Delete}"
-}
-
-; Add "!folder:" to the Everything search box (Edit1) to exclude folders from results
-ExcludeFolders() {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
-    return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
-  if InStr(curr, "!folder:") {
-    ; Remove '!folder:' if present
-    newText := StrReplace(curr, "!folder:")
-  } else {
-    currTrim := Trim(curr)
-    if (currTrim = "") {
-      newText := "!folder:"
-    } else {
-      ; ensure a space before appending if needed
-      newText := RegExMatch(curr, "\s$") ? curr . "!folder:" : curr . " !folder:"
-    }
-  }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
-}
-
-; Toggle exclusion of a specific folder path in the Everything search box
-ToggleExcludeFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
-    return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
-  ; Normalize path for exclusion syntax (remove trailing backslash)
-  folder := folderPath
-  if (SubStr(folder, -1) = "\\")
-    folder := SubStr(folder, 1, -1)
-  excl := '!"' . folder . '"'
-  if InStr(curr, excl) {
-    ; Remove exclusion
-    newText := StrReplace(curr, excl)
-  } else {
-    currTrim := Trim(curr)
-    if (currTrim = "") {
-      newText := excl
-    } else {
-      newText := RegExMatch(curr, "\s$") ? curr . excl : curr . " " . excl
-    }
-  }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
-}
-
-; Restrict search to only a specific folder by appending |folder:"path" to the Everything search box
-SetSearchOnlyFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
-    return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
-  ; Normalize path for Everything folder search syntax (remove trailing backslash)
-  folder := folderPath
-  if (SubStr(folder, -1) = "\\")
-    folder := SubStr(folder, 1, -1)
-  only := ' "' . folder . '"'
-  if InStr(curr, only) {
-    ; Already present, do nothing
-    return
-  }
-  currTrim := Trim(curr)
-  if (currTrim = "") {
-    newText := only
-  } else {
-    newText := curr . only
-  }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
-}
-
-; Remove the |folder:"path" filter for the given folder from the Everything search box
-ClearSearchOnlyFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
-    return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
-  folder := folderPath
-  if (SubStr(folder, -1) = "\\")
-    folder := SubStr(folder, 1, -1)
-  only := ' |folder:"' . folder . '"'
-  newText := StrReplace(curr, only)
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
 }
 
 Explorer_GetSelected() {
