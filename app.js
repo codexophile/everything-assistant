@@ -286,7 +286,7 @@ btnCleanQuery.title = 'Clean query';
 Icon.setIcon(btnCleanQuery, 'ban', 'Clean query');
 els.secondary.appendChild(btnCleanQuery);
 btnCleanQuery.addEventListener('click', async () => {
-  ahk.global.CleanQuery();
+  await ahk.global.CleanQuery();
 });
 
 // Delete button state and action
