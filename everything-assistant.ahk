@@ -9,6 +9,10 @@ MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
 AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
 
+; Hotkeys
+; Alt+Shift+C -> Clean the current Everything query (remove &, commas, square brackets, tidy spaces)
+!+c:: CleanQuery()
+
 ; Globals exposed to the WebView for current selection
 SelectedFilePath := ""
 SelectedFileName := ""
@@ -134,8 +138,11 @@ CleanQuery() {
   if (curr = "") {
     return
   }
-  ; Remove ampersands and commas
-  cleaned := RegExReplace(curr, "[&,]", "")
+  ; Remove ampersands, commas, and square brackets then normalize whitespace
+  cleaned := RegExReplace(curr, "[&,\[\]]", "")
+  ; Collapse multiple spaces/tabs/newlines into a single space
+  cleaned := RegExReplace(cleaned, "\s+", " ")
+  cleaned := Trim(cleaned)
   if (cleaned != curr) {
     ControlSetText(cleaned, "Edit1", EverythingWindowTitle)
   }
