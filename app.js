@@ -273,6 +273,16 @@ btnExclude.addEventListener('click', async () => {
   }
 });
 
+// Secondary toolbar: Remove ampersands and commas from search query
+const btnCleanQuery = document.createElement('button');
+btnCleanQuery.id = 'btn-clean-query';
+btnCleanQuery.title = 'Remove ampersands (&) and commas (,) from search query';
+Icon.setIcon(btnCleanQuery, 'ban', 'Remove & and , from search query');
+els.secondary.appendChild(btnCleanQuery);
+btnCleanQuery.addEventListener('click', async () => {
+  ahk.global.CleanQuery();
+});
+
 // Delete button state and action
 async function updateDeleteState() {
   try {

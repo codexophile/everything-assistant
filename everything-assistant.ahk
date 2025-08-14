@@ -27,6 +27,27 @@ AssistantGui.Navigate "index.html"
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
 
+;  MARK: Essential
+
+;  MARK: Query related
+
+CleanQuery() {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  if (curr = "") {
+    return
+  }
+  ; Remove ampersands and commas
+  cleaned := RegExReplace(curr, "[&,]", "")
+  if (cleaned != curr) {
+    ControlSetText(cleaned, "Edit1", EverythingWindowTitle)
+  }
+}
+
 CheckEverythingActive() {
   global AssistantGui
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
