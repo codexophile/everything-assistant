@@ -206,7 +206,7 @@ function renderTags(tags) {
       chip.title = `Search for tag: ${t}`;
       chip.style.cursor = 'pointer';
       chip.addEventListener('click', () => {
-        window.location.href = `es:${encodeURIComponent(`[${t}]`)}`;
+        window.open(`es:${encodeURIComponent(`[${t}]`)}`, '_blank');
       });
       els.tags.appendChild(chip);
     }
