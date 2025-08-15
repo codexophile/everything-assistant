@@ -109,11 +109,12 @@ async function isExcluded(folder) {
   return !!curr && curr.includes(excl);
 }
 
-function renderFolderButtons(items) {
+async function renderFolderButtons(items) {
   if (!items?.length) {
     els.actions.innerHTML = '';
     return;
   }
+  const fileName = await ahk.global.SelectedFileName;
   els.actions.innerHTML = '';
   const btns = document.createElement('div');
   btns.style.display = 'flex';
@@ -182,7 +183,7 @@ function renderFolderButtons(items) {
     btnPwsh.addEventListener('click', async () => {
       try {
         if (window.ahk?.global?.OpenPwsh) {
-          await ahk.global.OpenPwsh(folder);
+          await ahk.global.OpenPwsh(folder, fileName);
         } else {
           // Fallback: try to open via shell: will likely be ignored in WebView context
           window.open(`file://${encodeURIComponent(folder)}`);

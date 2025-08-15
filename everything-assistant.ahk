@@ -317,7 +317,7 @@ SendToAvidemux(path) {
 }
 
 ; Open PowerShell (pwsh) in the given folder as working directory
-OpenPwsh(folderPath) {
+OpenPwsh(folderPath, selectedFileName) {
   try {
     if (folderPath = "")
       return
@@ -333,15 +333,11 @@ OpenPwsh(folderPath) {
     ; Quote the path properly and set working directory
     ; Run <exe> -NoExit -Command Set-Location -LiteralPath '<folder>'
     cmd := pwshPath " -NoExit -Command Set-Location -LiteralPath " "'" folderPath "'"
-    Run cmd, folderPath, "UseErrorLevel"
-    ; if (ErrorLevel) {
-    ;   ; try Windows PowerShell
-    ;   cmd2 := powershellPath " -NoExit -Command Set-Location -LiteralPath " "'" folderPath "'"
-    ;   Run cmd2, folderPath, "UseErrorLevel"
-    ;   if (ErrorLevel) {
-    ;     MsgBox "Failed to launch PowerShell. Ensure pwsh.exe or powershell.exe is in PATH."
-    ;   }
-    ; }
+    Run cmd, folderPath, , &OutPid
+    WinWait "ahk_pid " OutPid
+    WinActivate
+    A_Clipboard := '"' selectedFileName '"'
+    Send("^v{Home}")
   } catch as e {
     try MsgBox "(error) " . e.Message
   }
