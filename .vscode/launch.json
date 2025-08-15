@@ -8,7 +8,7 @@
       "name": "Launch AutoHotkey Script",
       "type": "autohotkey",
       "request": "launch",
-      "program": "${workspaceFolder}/main.ahk",
+      "program": "${workspaceFolder}/everything-assistant.ahk",
       "cwd": "${workspaceFolder}",
       "stopOnEntry": false
     }
