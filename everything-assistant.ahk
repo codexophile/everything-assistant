@@ -316,6 +316,37 @@ SendToAvidemux(path) {
   }
 }
 
+; Open PowerShell (pwsh) in the given folder as working directory
+OpenPwsh(folderPath) {
+  try {
+    if (folderPath = "")
+      return
+    ; Ensure path exists
+    if !FileExist(folderPath) {
+      MsgBox "Folder not found: " . folderPath
+      return
+    }
+    ; Prefer pwsh (PowerShell Core), fallback to Windows PowerShell
+    pwshPath := "pwsh.exe"
+    powershellPath := "powershell.exe"
+    ; Use UseErrorLevel so we can detect failures
+    ; Quote the path properly and set working directory
+    ; Run <exe> -NoExit -Command Set-Location -LiteralPath '<folder>'
+    cmd := pwshPath " -NoExit -Command Set-Location -LiteralPath " "'" folderPath "'"
+    Run cmd, folderPath, "UseErrorLevel"
+    ; if (ErrorLevel) {
+    ;   ; try Windows PowerShell
+    ;   cmd2 := powershellPath " -NoExit -Command Set-Location -LiteralPath " "'" folderPath "'"
+    ;   Run cmd2, folderPath, "UseErrorLevel"
+    ;   if (ErrorLevel) {
+    ;     MsgBox "Failed to launch PowerShell. Ensure pwsh.exe or powershell.exe is in PATH."
+    ;   }
+    ; }
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
 SendToFileTagger(data) {
   try {
     s := ""

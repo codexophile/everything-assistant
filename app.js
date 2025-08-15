@@ -43,6 +43,8 @@ const Icon = (() => {
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M464 128h-192l-64-64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V176c0-26.5-21.5-48-48-48zM352 304H160c-8.8 0-16-7.2-16-16s7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16z"/></svg>',
     avidemux:
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="16" height="16" fill="currentColor"><path d="M288 32C129.9 32 0 161.9 0 320c0 70.7 57.3 128 128 128h320c70.7 0 128-57.3 128-128C576 161.9 446.1 32 288 32zm0 64c123.7 0 224 100.3 224 224 0 52.9-43.1 96-96 96H160c-52.9 0-96-43.1-96-96 0-123.7 100.3-224 224-224zm0 64c-88.2 0-160 71.8-160 160 0 35.3 28.7 64 64 64h192c35.3 0 64-28.7 64-64 0-88.2-71.8-160-160-160z"/></svg>',
+    pwsh:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M2 3h20v18H2V3zm2 2v14h16V5H4zm3.5 3 4.5 4-4.5 4V8z"/></svg>',
   };
   function setIcon(btn, name, title) {
     if (title) btn.title = title;
@@ -53,6 +55,7 @@ const Icon = (() => {
         ban: 'fa-solid fa-ban',
         search: 'fa-solid fa-magnifying-glass',
         folderMinus: 'fa-solid fa-folder-minus',
+  pwsh: 'fa-solid fa-terminal',
       };
       const cls = map[name] || 'fa-solid fa-circle-question';
       btn.innerHTML = `<i class="${cls}"></i>`;
@@ -172,6 +175,24 @@ function renderFolderButtons(items) {
 
     btnGroup.appendChild(btnExclude);
     btnGroup.appendChild(btnOnly);
+    // Open PowerShell button
+    const btnPwsh = document.createElement('button');
+    btnPwsh.className = 'folder-btn pwsh';
+    Icon.setIcon(btnPwsh, 'pwsh', `Open PowerShell in ${folder}`);
+    btnPwsh.title = `Open PowerShell in ${folder}`;
+    btnPwsh.addEventListener('click', async () => {
+      try {
+        if (window.ahk?.global?.OpenPwsh) {
+          await ahk.global.OpenPwsh(folder);
+        } else {
+          // Fallback: try to open via shell: will likely be ignored in WebView context
+          window.open(`file://${encodeURIComponent(folder)}`);
+        }
+      } catch (e) {
+        console.error('OpenPwsh failed', e);
+      }
+    });
+    btnGroup.appendChild(btnPwsh);
     row.appendChild(btnGroup);
     btns.appendChild(row);
   });
