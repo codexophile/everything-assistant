@@ -163,7 +163,7 @@ CheckEverythingActive() {
     fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
     try names := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
     catch {
-      names := ""
+      return
     }
     currCount := (names && names != "") ? StrSplit(names, "`n").Length : 0
 
