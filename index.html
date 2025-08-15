@@ -151,10 +151,11 @@
   }
 
   #chapters-list img {
-    width: 72px;
-    height: 40px;
-    object-fit: cover;
-    border: 1px solid #ccc;
+  width: 72px;
+  height: 72px; /* make thumbnails square */
+  aspect-ratio: 1 / 1;
+  object-fit: cover; /* crop to fill square */
+  border: 1px solid #ccc;
   }
 
   #chapters-list .chap-text {
