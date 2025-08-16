@@ -32,7 +32,9 @@ export function renderTags(tags) {
       });
       tagsEl.appendChild(chip);
     }
-    els.tagsContainer.style.display = '';
+    // Need explicit display value because stylesheet declares
+    // #tags-container { display: none; } so empty string keeps it hidden.
+    els.tagsContainer.style.display = 'block';
   } else {
     tagsEl.innerHTML = '';
     els.tagsContainer.style.display = 'none';
