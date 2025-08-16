@@ -22,6 +22,7 @@ SelectedNames := ""        ; newline-delimited names from Everything list view
 SelectedCount := 0
 SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single selection
 SelectedChaptersJson := ""  ; JSON array of chapter objects parsed from .ffmetadata (if any)
+SelectedFileDuration := ""  ; Duration in seconds or formatted string
 
 ; GUI setup
 AssistantGui := WebViewGui("Resize AlwaysOnTop")
@@ -151,7 +152,7 @@ CleanQuery() {
 CheckEverythingActive() {
   global AssistantGui
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
-  global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson
+  global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson, SelectedFileDuration
   global EverythingWindowTitle, AssistantWindowTitle
 
   if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
@@ -190,8 +191,10 @@ CheckEverythingActive() {
         if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
           ; In Everything context SelectedFilePath is folder path
           SelectedChaptersJson := GetChaptersForSelected(SelectedFilePath, SelectedFileName)
+          SelectedFileDuration := GetMediaDuration(SelectedFilePath "\" SelectedFileName)
         } else {
           SelectedChaptersJson := ""
+          SelectedFileDuration := ""
         }
 
         ; Notify webview to update its UI from ahk.global variables
@@ -205,6 +208,7 @@ CheckEverythingActive() {
       SelectedCount := 0
       SelectedFolderPaths := ""
       SelectedChaptersJson := ""
+      SelectedFileDuration := ""
       LastSelectedPath := ""
       LastSelectedName := ""
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
@@ -253,8 +257,70 @@ CheckEverythingActive() {
         ; In Explorer context SelectedFilePath is full file path; derive folder
         SplitPath(SelectedFilePath, , &onlyDir)
         SelectedChaptersJson := GetChaptersForSelected(onlyDir, SelectedFileName)
+        SelectedFileDuration := GetMediaDuration(SelectedFilePath)
       } else {
         SelectedChaptersJson := ""
+        SelectedFileDuration := ""
+      }
+      ; Returns duration in seconds (as string) or blank if not media or error
+      GetMediaDuration(filePath) {
+        try {
+          if (!filePath || !FileExist(filePath))
+            return ""
+          SplitPath(filePath, , , &ext)
+          ext := StrLower(ext)
+          for , v in ["mp4", "mkv", "mov", "avi", "webm", "m4v", "mp3", "wav", "flac", "ogg", "aac"] {
+            if (ext = v) {
+              ; Determine ffprobe (local exe first, else rely on PATH)
+              ffprobe := "ffprobe.exe"
+              if !FileExist(ffprobe)
+                ffprobe := "ffprobe"
+              tmp := A_Temp "\\ea_dur_" A_TickCount ".txt"
+              comspec := EnvGet("ComSpec")
+              if (!comspec)
+                comspec := "cmd.exe"
+              core := '"' ffprobe '" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
+              ; Wrap core command in quotes for /c, redirect stdout to temp, silence stderr.
+              full := comspec ' /d /c "' core ' > "' tmp '" 2>nul"'
+              RunWait full, , "Hide"
+              if FileExist(tmp) {
+                duration := Trim(FileRead(tmp, "UTF-8"))
+                FileDelete tmp
+                if (duration != "") {
+                  return FormatDuration(duration)
+                }
+              }
+            }
+          }
+          return ""
+        } catch {
+          return ""
+        }
+      }
+
+      ; Helper to run a command and get stdout (blocking, one line)
+      RunWaitOneLine(cmd, &out) {
+        shell := ComObject("WScript.Shell")
+        exec := shell.Exec(cmd)
+        out := ""
+        while !exec.StdOut.AtEndOfStream {
+          out := exec.StdOut.ReadLine()
+          break
+        }
+      }
+
+      ; Format seconds as H:MM:SS
+      FormatDuration(seconds) {
+        if (seconds = "" || seconds < 0)
+          return ""
+        total := Round(seconds)
+        s := Mod(total, 60)
+        m := Mod((total - s) / 60, 60)
+        h := (total - s - m * 60) / 3600
+        if (h > 0)
+          return Format("{:d}:{:02}:{:02}", h, m, s)
+        else
+          return Format("{:02}:{:02}", m, s)
       }
 
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
@@ -272,6 +338,7 @@ CheckEverythingActive() {
       LastSelectedPath := ""
       LastSelectedName := ""
       SelectedChaptersJson := ""
+      SelectedFileDuration := ""
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
     AssistantGui.Hide()

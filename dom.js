@@ -29,6 +29,7 @@ export const els = {
   summary: document.querySelector('#sel-summary'),
   name: document.querySelector('#sel-name'),
   path: document.querySelector('#sel-path'),
+  duration: document.querySelector('#sel-duration'),
   actions: document.querySelector('#file-actions'),
   secondary: document.querySelector('#secondary-toolbar'),
   btnDelete: document.querySelector('#btn-delete'),

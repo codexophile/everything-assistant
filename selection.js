@@ -5,21 +5,30 @@ import { renderChapters } from './chapters.js';
 
 export async function renderSelection() {
   try {
-    const [fileName, filePath, namesAll, countRaw, folderChain, chaptersJson] =
-      await Promise.all([
-        ahk.global.SelectedFileName,
-        ahk.global.SelectedFilePath,
-        ahk.global.SelectedNames,
-        ahk.global.SelectedCount,
-        ahk.global.SelectedFolderPaths,
-        ahk.global.SelectedChaptersJson,
-      ]);
+    const [
+      fileName,
+      filePath,
+      namesAll,
+      countRaw,
+      folderChain,
+      chaptersJson,
+      duration,
+    ] = await Promise.all([
+      ahk.global.SelectedFileName,
+      ahk.global.SelectedFilePath,
+      ahk.global.SelectedNames,
+      ahk.global.SelectedCount,
+      ahk.global.SelectedFolderPaths,
+      ahk.global.SelectedChaptersJson,
+      ahk.global.SelectedFileDuration,
+    ]);
     const count = Number(countRaw) || 0;
     if (count > 1) {
       els.summary.innerText = `${count} items selected`;
       els.name.style.display = '';
       els.name.innerText = (namesAll || '').split('\n').slice(0, 10).join('\n');
       els.path.innerText = '(multiple paths)';
+      els.duration.style.display = 'none';
       els.actions.innerHTML = '';
       const allNames = (namesAll || '').split('\n').filter(Boolean);
       renderTags(extractTagsFromNamesList(allNames));
@@ -31,6 +40,13 @@ export async function renderSelection() {
       els.name.style.display = '';
       els.name.innerText = fileName || '';
       els.path.innerText = filePath && filePath.trim() ? filePath : '(no path)';
+      if (duration && duration.trim()) {
+        els.duration.style.display = '';
+        els.duration.innerText = `Duration: ${duration}`;
+      } else {
+        els.duration.style.display = 'none';
+        els.duration.innerText = '';
+      }
       const items = folderChain ? folderChain.split('\n') : [];
       renderFolderButtons(items);
       renderTags(extractTagsFromNamesList([fileName || '']));
@@ -41,6 +57,8 @@ export async function renderSelection() {
     els.name.style.display = 'none';
     els.name.innerText = '';
     els.path.innerText = '(no path)';
+    els.duration.style.display = 'none';
+    els.duration.innerText = '';
     els.actions.innerHTML = '';
     renderTags([]);
     renderChapters(null);
