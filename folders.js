@@ -12,16 +12,22 @@ async function isExcluded(folder) {
 }
 
 export async function renderFolderButtons(items) {
+  // If no folders, clear any actions and secondary toolbar
   if (!items?.length) {
     els.actions.innerHTML = '';
+    els.secondary.innerHTML = '';
     return;
   }
+
   const fileName = await ahk.global.SelectedFileName;
   els.actions.innerHTML = '';
-  const btns = document.createElement('div');
-  btns.style.display = 'flex';
-  btns.style.flexDirection = 'column';
-  btns.style.gap = '2px';
+  els.secondary.innerHTML = '';
+
+  const list = document.createElement('div');
+  list.style.display = 'flex';
+  list.style.flexDirection = 'column';
+  list.style.gap = '6px';
+
   items.forEach(folder => {
     const row = document.createElement('div');
     row.style.display = 'flex';
@@ -29,62 +35,89 @@ export async function renderFolderButtons(items) {
     row.style.gap = '8px';
 
     const folderLabel = document.createElement('span');
-    folderLabel.className = 'mono';
+    folderLabel.className = 'folder-item mono';
     folderLabel.textContent = folder;
-    row.appendChild(folderLabel);
+    folderLabel.dataset.path = folder;
 
-    const btnGroup = document.createElement('span');
-    btnGroup.style.display = 'flex';
-    btnGroup.style.gap = '4px';
-
-    const btnExclude = document.createElement('button');
-    btnExclude.className = 'folder-btn';
-    setIcon(btnExclude, 'ban', `Toggle exclusion for ${folder}`);
-    (async () => setExcludedStyle(btnExclude, await isExcluded(folder)))();
-    btnExclude.addEventListener('click', async () => {
-      await ahk.global.ToggleExcludeFolder(folder);
-      setExcludedStyle(btnExclude, await isExcluded(folder));
-    });
-
-    const btnOnly = document.createElement('button');
-    btnOnly.className = 'folder-btn only';
-    setIcon(btnOnly, 'search', `Toggle search only in ${folder}`);
-    btnOnly.dataset.active = 'false';
-    function setOnlyStyle(active) {
-      btnOnly.style.background = active ? '#dfd' : '';
-    }
-    btnOnly.addEventListener('click', async () => {
-      const isActive = btnOnly.dataset.active === 'true';
-      btnOnly.dataset.active = (!isActive).toString();
-      setOnlyStyle(!isActive);
-      if (!isActive) {
-        await ahk.global.SetSearchOnlyFolder?.(folder);
+    folderLabel.addEventListener('click', e => {
+      const prev = list.querySelector('.folder-item.selected');
+      const isSame = prev === folderLabel;
+      if (prev) prev.classList.remove('selected');
+      if (isSame) {
+        // deselect
+        els.secondary.innerHTML = '';
       } else {
-        await ahk.global.ClearSearchOnlyFolder?.();
-      }
-    });
-    setOnlyStyle(false);
-
-    const btnPwsh = document.createElement('button');
-    btnPwsh.className = 'folder-btn pwsh';
-    setIcon(btnPwsh, 'pwsh', `Open PowerShell in ${folder}`);
-    btnPwsh.addEventListener('click', async () => {
-      try {
-        if (window.ahk?.global?.OpenPwsh) {
-          await ahk.global.OpenPwsh(folder, fileName);
-        } else {
-          window.open(`file://${encodeURIComponent(folder)}`);
-        }
-      } catch (e) {
-        console.error('OpenPwsh failed', e);
+        folderLabel.classList.add('selected');
+        renderFolderToolbar(folder, fileName);
       }
     });
 
-    btnGroup.appendChild(btnExclude);
-    btnGroup.appendChild(btnOnly);
-    btnGroup.appendChild(btnPwsh);
-    row.appendChild(btnGroup);
-    btns.appendChild(row);
+    row.appendChild(folderLabel);
+    list.appendChild(row);
   });
-  els.actions.appendChild(btns);
+
+  els.actions.appendChild(list);
+}
+
+async function renderFolderToolbar(folder, fileName) {
+  els.secondary.innerHTML = '';
+  // label
+  const lbl = document.createElement('div');
+  lbl.className = 'mono-dim';
+  lbl.textContent = `Folder: ${folder}`;
+
+  const group = document.createElement('div');
+  group.style.display = 'flex';
+  group.style.gap = '6px';
+  group.style.alignItems = 'center';
+
+  const btnExclude = document.createElement('button');
+  btnExclude.className = 'icon-btn';
+  setIcon(btnExclude, 'ban', `Toggle exclusion for ${folder}`);
+  (async () => setExcludedStyle(btnExclude, await isExcluded(folder)))();
+  btnExclude.addEventListener('click', async () => {
+    await ahk.global.ToggleExcludeFolder(folder);
+    setExcludedStyle(btnExclude, await isExcluded(folder));
+  });
+
+  const btnOnly = document.createElement('button');
+  btnOnly.className = 'icon-btn';
+  setIcon(btnOnly, 'search', `Toggle search only in ${folder}`);
+  btnOnly.dataset.active = 'false';
+  function setOnlyStyleActive(active) {
+    btnOnly.style.background = active ? '#dfd' : '';
+  }
+  btnOnly.addEventListener('click', async () => {
+    const isActive = btnOnly.dataset.active === 'true';
+    btnOnly.dataset.active = (!isActive).toString();
+    setOnlyStyleActive(!isActive);
+    if (!isActive) {
+      await ahk.global.SetSearchOnlyFolder?.(folder);
+    } else {
+      await ahk.global.ClearSearchOnlyFolder?.();
+    }
+  });
+  setOnlyStyleActive(false);
+
+  const btnPwsh = document.createElement('button');
+  btnPwsh.className = 'icon-btn';
+  setIcon(btnPwsh, 'pwsh', `Open PowerShell in ${folder}`);
+  btnPwsh.addEventListener('click', async () => {
+    try {
+      if (window.ahk?.global?.OpenPwsh) {
+        await ahk.global.OpenPwsh(folder, fileName);
+      } else {
+        window.open(`file://${encodeURIComponent(folder)}`);
+      }
+    } catch (e) {
+      console.error('OpenPwsh failed', e);
+    }
+  });
+
+  group.appendChild(btnExclude);
+  group.appendChild(btnOnly);
+  group.appendChild(btnPwsh);
+
+  els.secondary.appendChild(lbl);
+  els.secondary.appendChild(group);
 }
