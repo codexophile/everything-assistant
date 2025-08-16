@@ -2,10 +2,10 @@
 #SingleInstance Force
 #Include ..\..\#lib\WebViewToo\WebViewToo.ahk
 ; Local modules
-#Include ./WindowHelpers.ahk
-#Include ./QueryActions.ahk
-#Include ./Chapters.ahk
-#Include ./FileActions.ahk
+#Include ./ahk/WindowHelpers.ahk
+#Include ./ahk/QueryActions.ahk
+#Include ./ahk/Chapters.ahk
+#Include ./ahk/FileActions.ahk
 
 ; Constants
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
