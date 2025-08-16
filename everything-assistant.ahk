@@ -32,41 +32,101 @@ AssistantGui.Debug()
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
 
+; =========================
+; Helpers / Reuse Utilities
+; =========================
+
+; Ensure Everything window exists. Returns true if present else false (and optionally shows a message).
+EnsureEverythingWindow(showMsg := true) {
+  global EverythingWindowTitle
+  if WinExist(EverythingWindowTitle)
+    return true
+  if showMsg
+    MsgBox "Everything window not found."
+  return false
+}
+
+GetEverythingQuery() {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle)
+    return ""
+  return ControlGetText("Edit1", EverythingWindowTitle)
+}
+
+SetEverythingQuery(text) {
+  global EverythingWindowTitle
+  if !WinExist(EverythingWindowTitle)
+    return
+  ControlSetText(text, "Edit1", EverythingWindowTitle)
+}
+
+; Append token to existing query ensuring a separating space when needed.
+AppendToken(curr, token) {
+  return RegExMatch(curr, "\s$") ? curr . token : curr . " " . token
+}
+
+; Reset selection-related globals & notify webview.
+ResetSelection() {
+  global SelectedFilePath, SelectedFileName, SelectedNames, SelectedCount, SelectedFolderPaths
+  global LastSelectedPath, LastSelectedName, SelectedChaptersJson, AssistantGui
+  SelectedFilePath := ""
+  SelectedFileName := ""
+  SelectedNames := ""
+  SelectedCount := 0
+  SelectedFolderPaths := ""
+  SelectedChaptersJson := ""
+  LastSelectedPath := ""
+  LastSelectedName := ""
+  AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+}
+
+; Populate SelectedFolderPaths when a single selection exists.
+SetSelectedFolderChainIfSingle() {
+  global SelectedFolderPaths, SelectedCount, SelectedFilePath
+  SelectedFolderPaths := ""
+  if (SelectedCount = 1 && SelectedFilePath != "") {
+    folders := GetFolderChain(SelectedFilePath)
+    SelectedFolderPaths := JoinWithNewlines(folders)
+  }
+}
+
+; Update chapter metadata depending on context.
+UpdateChaptersMetadata(isExplorer := false) {
+  global SelectedCount, SelectedFilePath, SelectedFileName, SelectedChaptersJson
+  if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
+    if isExplorer {
+      SplitPath(SelectedFilePath, &fName, , , &dir)
+      SelectedChaptersJson := GetChaptersForSelected(dir, fName)
+    } else {
+      SelectedChaptersJson := GetChaptersForSelected(SelectedFilePath, SelectedFileName)
+    }
+  } else {
+    SelectedChaptersJson := ""
+  }
+}
+
 ;  MARK: Essential
 
 ;  MARK: Query related
 
 ; Add "!folder:" to the Everything search box (Edit1) to exclude folders from results
 ExcludeFolders() {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
+  if !EnsureEverythingWindow()
     return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  curr := GetEverythingQuery()
   if InStr(curr, "!folder:") {
-    ; Remove '!folder:' if present
     newText := StrReplace(curr, "!folder:")
   } else {
-    currTrim := Trim(curr)
-    if (currTrim = "") {
-      newText := "!folder:"
-    } else {
-      ; ensure a space before appending if needed
-      newText := RegExMatch(curr, "\s$") ? curr . "!folder:" : curr . " !folder:"
-    }
+    newText := (Trim(curr) = "") ? "!folder:" : AppendToken(curr, "!folder:")
   }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+  SetEverythingQuery(newText)
 }
 
 ; Toggle exclusion of a specific folder path in the Everything search box
 ToggleExcludeFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
+  if !EnsureEverythingWindow()
     return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  curr := GetEverythingQuery()
   ; Normalize path for exclusion syntax (remove trailing backslash)
   folder := folderPath
   if (SubStr(folder, -1) = "\\")
@@ -76,24 +136,16 @@ ToggleExcludeFolder(folderPath) {
     ; Remove exclusion
     newText := StrReplace(curr, excl)
   } else {
-    currTrim := Trim(curr)
-    if (currTrim = "") {
-      newText := excl
-    } else {
-      newText := RegExMatch(curr, "\s$") ? curr . excl : curr . " " . excl
-    }
+    newText := (Trim(curr) = "") ? excl : AppendToken(curr, excl)
   }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+  SetEverythingQuery(newText)
 }
 
 ; Restrict search to only a specific folder by appending |folder:"path" to the Everything search box
 SetSearchOnlyFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
+  if !EnsureEverythingWindow()
     return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  curr := GetEverythingQuery()
   ; Normalize path for Everything folder search syntax (remove trailing backslash)
   folder := folderPath
   if (SubStr(folder, -1) = "\\")
@@ -109,32 +161,26 @@ SetSearchOnlyFolder(folderPath) {
   } else {
     newText := curr . only
   }
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+  SetEverythingQuery(newText)
 }
 
 ; Remove the |folder:"path" filter for the given folder from the Everything search box
 ClearSearchOnlyFolder(folderPath) {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
+  if !EnsureEverythingWindow()
     return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  curr := GetEverythingQuery()
   folder := folderPath
   if (SubStr(folder, -1) = "\\")
     folder := SubStr(folder, 1, -1)
   only := ' |folder:"' . folder . '"'
   newText := StrReplace(curr, only)
-  ControlSetText(newText, "Edit1", EverythingWindowTitle)
+  SetEverythingQuery(newText)
 }
 
 CleanQuery() {
-  global EverythingWindowTitle
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
+  if !EnsureEverythingWindow()
     return
-  }
-  curr := ControlGetText("Edit1", EverythingWindowTitle)
+  curr := GetEverythingQuery()
   if (curr = "") {
     return
   }
@@ -144,7 +190,7 @@ CleanQuery() {
   cleaned := RegExReplace(cleaned, "\s+", " ")
   cleaned := Trim(cleaned)
   if (cleaned != curr) {
-    ControlSetText(cleaned, "Edit1", EverythingWindowTitle)
+    SetEverythingQuery(cleaned)
   }
 }
 
@@ -198,16 +244,7 @@ CheckEverythingActive() {
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
       }
     } else if (LastSelectedPath != "" || LastSelectedName != "") {
-      ; Clear selection state and notify
-      SelectedFilePath := ""
-      SelectedFileName := ""
-      SelectedNames := ""
-      SelectedCount := 0
-      SelectedFolderPaths := ""
-      SelectedChaptersJson := ""
-      LastSelectedPath := ""
-      LastSelectedName := ""
-      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+      ResetSelection()
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
@@ -239,41 +276,21 @@ CheckEverythingActive() {
       SelectedNames := names
       SelectedCount := currCount
 
-      SelectedFolderPaths := ""
-      if ((SelectedCount = 1) && (SelectedFilePath != "")) {
-        folders := GetFolderChain(SelectedFilePath)
-        SelectedFolderPaths := JoinWithNewlines(folders)
-      }
+      SetSelectedFolderChainIfSingle()
 
       LastSelectedPath := selectedPaths
       LastSelectedName := "" ; Reset this to ensure change detection works across apps
 
       ; Update chapter metadata (only for single selection w/ video file)
-      if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
-        ; In Explorer context SelectedFilePath is full file path; derive folder
-        SplitPath(SelectedFilePath, , &onlyDir)
-        SelectedChaptersJson := GetChaptersForSelected(onlyDir, SelectedFileName)
-      } else {
-        SelectedChaptersJson := ""
-      }
+      UpdateChaptersMetadata(true)
 
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
   } else {
-    if (LastSelectedPath != "" || LastSelectedName != "") {
-      ; Clear selection state and notify
-      SelectedFilePath := ""
-      SelectedFileName := ""
-      SelectedNames := ""
-      SelectedCount := 0
-      SelectedFolderPaths := ""
-      LastSelectedPath := ""
-      LastSelectedName := ""
-      SelectedChaptersJson := ""
-      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
-    }
+    if (LastSelectedPath != "" || LastSelectedName != "")
+      ResetSelection()
     AssistantGui.Hide()
   }
 }
