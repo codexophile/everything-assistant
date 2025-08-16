@@ -346,6 +346,39 @@ OpenPwsh(folderPath, selectedFileName) {
   }
 }
 
+; Open a folder in Explorer
+OpenFolder(folderPath) {
+  try {
+    if (folderPath = "")
+      return
+    if !FileExist(folderPath) {
+      MsgBox "Folder not found: " . folderPath
+      return
+    }
+    cmd := "explorer.exe " . Chr(34) . folderPath . Chr(34)
+    Run(cmd)
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+; Open parent folder and select the provided folder (or file)
+OpenExplorerSelect(pathToSelect) {
+  try {
+    if (pathToSelect = "")
+      return
+    if !FileExist(pathToSelect) {
+      MsgBox "Path not found: " . pathToSelect
+      return
+    }
+    ; Use explorer /select,"path"
+    cmd := "explorer.exe /select," . Chr(34) . pathToSelect . Chr(34)
+    Run(cmd)
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
 SendToFileTagger(data) {
   try {
     s := ""

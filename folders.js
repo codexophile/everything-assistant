@@ -123,9 +123,53 @@ async function renderFolderToolbar(row, folder, fileName, list) {
     }
   });
 
+  // Open folder in Explorer
+  const btnOpen = document.createElement('button');
+  btnOpen.className = 'icon-btn';
+  btnOpen.title = `Open ${folder} in Explorer`;
+  btnOpen.innerHTML = '<i class="fa-solid fa-folder-open"></i>';
+  btnOpen.addEventListener('click', async () => {
+    try {
+      if (window.ahk?.global?.OpenFolder) {
+        await ahk.global.OpenFolder(folder);
+      } else if (window.ahk?.global?.OpenPwsh) {
+        // fallback: open pwsh in folder
+        await ahk.global.OpenPwsh(folder, fileName);
+      } else {
+        window.open(`file://${encodeURIComponent(folder)}`);
+      }
+    } catch (e) {
+      console.error('Open folder failed', e);
+    }
+  });
+
+  // Open parent and select this folder
+  const btnOpenParentSelect = document.createElement('button');
+  btnOpenParentSelect.className = 'icon-btn';
+  btnOpenParentSelect.title = `Open parent folder and select ${folder}`;
+  btnOpenParentSelect.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i>';
+  btnOpenParentSelect.addEventListener('click', async () => {
+    try {
+      if (window.ahk?.global?.OpenExplorerSelect) {
+        await ahk.global.OpenExplorerSelect(folder);
+      } else if (window.ahk?.global?.OpenFolder) {
+        // best-effort: open parent folder
+        const parent = folder.replace(/\\[^\\]+$/, '');
+        await ahk.global.OpenFolder(parent);
+      } else {
+        const parent = folder.replace(/\\[^\\]+$/, '');
+        window.open(`file://${encodeURIComponent(parent)}`);
+      }
+    } catch (e) {
+      console.error('Open parent select failed', e);
+    }
+  });
+
   group.appendChild(btnExclude);
   group.appendChild(btnOnly);
   group.appendChild(btnPwsh);
+  group.appendChild(btnOpen);
+  group.appendChild(btnOpenParentSelect);
 
   toolbar.appendChild(lbl);
   toolbar.appendChild(group);
