@@ -5,14 +5,15 @@ import { renderChapters } from './chapters.js';
 
 export async function renderSelection() {
   try {
-    const [fileName, filePath, namesAll, countRaw, folderChain, chaptersJson] = await Promise.all([
-      ahk.global.SelectedFileName,
-      ahk.global.SelectedFilePath,
-      ahk.global.SelectedNames,
-      ahk.global.SelectedCount,
-      ahk.global.SelectedFolderPaths,
-      ahk.global.SelectedChaptersJson
-    ]);
+    const [fileName, filePath, namesAll, countRaw, folderChain, chaptersJson] =
+      await Promise.all([
+        ahk.global.SelectedFileName,
+        ahk.global.SelectedFilePath,
+        ahk.global.SelectedNames,
+        ahk.global.SelectedCount,
+        ahk.global.SelectedFolderPaths,
+        ahk.global.SelectedChaptersJson,
+      ]);
     const count = Number(countRaw) || 0;
     if (count > 1) {
       els.summary.innerText = `${count} items selected`;
@@ -52,7 +53,7 @@ export async function updateDeleteState() {
   try {
     const [countRaw, filePath] = await Promise.all([
       ahk.global.SelectedCount,
-      ahk.global.SelectedFilePath
+      ahk.global.SelectedFilePath,
     ]);
     const count = Number(countRaw) || 0;
     els.btnDelete.disabled = !(count > 0 || (filePath && filePath.trim()));
@@ -63,7 +64,7 @@ export async function updateTagState() {
   try {
     const [countRaw, filePath] = await Promise.all([
       ahk.global.SelectedCount,
-      ahk.global.SelectedFilePath
+      ahk.global.SelectedFilePath,
     ]);
     const count = Number(countRaw) || 0;
     els.btnTag.disabled = !(count > 0 || (filePath && filePath.trim()));

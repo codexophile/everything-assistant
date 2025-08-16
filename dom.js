@@ -35,7 +35,9 @@ export const els = {
   btnTag: document.querySelector('#btn-tag'),
   btnAvidemux: document.querySelector('#btn-avidemux'),
   tagsContainer: createTagsContainerIfNeeded(),
-  get tags() { return document.querySelector('#tags'); },
+  get tags() {
+    return document.querySelector('#tags');
+  },
   chaptersSection: document.querySelector('#chapters-section'),
-  chaptersList: document.querySelector('#chapters-list')
+  chaptersList: document.querySelector('#chapters-list'),
 };

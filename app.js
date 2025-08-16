@@ -11,7 +11,11 @@ function initSecondaryToolbar() {
   setIcon(btnExclude, 'folderMinus', 'Exclude folders (!folder:)');
   els.secondary.appendChild(btnExclude);
   btnExclude.addEventListener('click', async () => {
-    try { await ahk.global.ExcludeFolders(); } catch (e) { console.error('ExcludeFolders failed', e); }
+    try {
+      await ahk.global.ExcludeFolders();
+    } catch (e) {
+      console.error('ExcludeFolders failed', e);
+    }
   });
 
   const btnCleanQuery = document.createElement('button');
@@ -19,7 +23,9 @@ function initSecondaryToolbar() {
   btnCleanQuery.title = 'Clean query';
   setIcon(btnCleanQuery, 'ban', 'Clean query');
   els.secondary.appendChild(btnCleanQuery);
-  btnCleanQuery.addEventListener('click', async () => { await ahk.global.CleanQuery(); });
+  btnCleanQuery.addEventListener('click', async () => {
+    await ahk.global.CleanQuery();
+  });
 }
 
 function initPrimaryToolbar() {
@@ -28,7 +34,11 @@ function initPrimaryToolbar() {
   setIcon(els.btnAvidemux, 'avidemux', 'Send to Avidemux');
 
   els.btnDelete.addEventListener('click', async () => {
-    try { await ahk.global.DeleteSelected(); } catch (e) { console.error('DeleteSelected failed', e); }
+    try {
+      await ahk.global.DeleteSelected();
+    } catch (e) {
+      console.error('DeleteSelected failed', e);
+    }
   });
   els.btnTag.addEventListener('click', async () => {
     try {
@@ -40,12 +50,16 @@ function initPrimaryToolbar() {
         const path = await ahk.global.GetSingleSelectedFilePath();
         await ahk.global.SendToFileTagger(path || '');
       }
-    } catch (e) { console.error('Tag action failed', e); }
+    } catch (e) {
+      console.error('Tag action failed', e);
+    }
   });
   els.btnAvidemux.addEventListener('click', async () => {
-    const count = Number(await ahk.global.SelectedCount) || 0; if (count !== 1) return;
+    const count = Number(await ahk.global.SelectedCount) || 0;
+    if (count !== 1) return;
     const path = await ahk.global.GetSingleSelectedFilePath();
-    if (window.ahk?.global?.SendToAvidemux) await ahk.global.SendToAvidemux(path || '');
+    if (window.ahk?.global?.SendToAvidemux)
+      await ahk.global.SendToAvidemux(path || '');
     else alert('SendToAvidemux function not implemented in AHK.');
   });
 }
@@ -53,7 +67,10 @@ function initPrimaryToolbar() {
 function initReloadButton() {
   window.addEventListener('DOMContentLoaded', () => {
     const reloadBtn = document.getElementById('btn-reload');
-    if (reloadBtn) reloadBtn.addEventListener('click', () => { window.ahk.global.reload(); });
+    if (reloadBtn)
+      reloadBtn.addEventListener('click', () => {
+        window.ahk.global.reload();
+      });
   });
 }
 

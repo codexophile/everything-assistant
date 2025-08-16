@@ -8,7 +8,11 @@ export function renderChapters(chaptersJson) {
     return;
   }
   let chapters = [];
-  try { chapters = JSON.parse(chaptersJson); } catch { chapters = []; }
+  try {
+    chapters = JSON.parse(chaptersJson);
+  } catch {
+    chapters = [];
+  }
   if (!Array.isArray(chapters) || !chapters.length) {
     els.chaptersSection.style.display = 'none';
     els.chaptersList.innerHTML = '';
@@ -24,7 +28,9 @@ export function renderChapters(chaptersJson) {
       img.loading = 'lazy';
       img.src = ch.thumbnail;
       img.alt = ch.title || `Chapter ${idx + 1}`;
-      img.onerror = function () { this.style.display = 'none'; };
+      img.onerror = function () {
+        this.style.display = 'none';
+      };
       row.appendChild(img);
     }
     const txt = document.createElement('div');
@@ -34,7 +40,9 @@ export function renderChapters(chaptersJson) {
     const time = document.createElement('div');
     time.style.color = '#555';
     time.textContent = `${ch.startTimecode || ''} - ${ch.endTimecode || ''}`;
-    txt.appendChild(title); txt.appendChild(time); row.appendChild(txt);
+    txt.appendChild(title);
+    txt.appendChild(time);
+    row.appendChild(txt);
     els.chaptersList.appendChild(row);
   });
 }

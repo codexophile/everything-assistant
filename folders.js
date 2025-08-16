@@ -50,7 +50,9 @@ export async function renderFolderButtons(items) {
     btnOnly.className = 'folder-btn only';
     setIcon(btnOnly, 'search', `Toggle search only in ${folder}`);
     btnOnly.dataset.active = 'false';
-    function setOnlyStyle(active) { btnOnly.style.background = active ? '#dfd' : ''; }
+    function setOnlyStyle(active) {
+      btnOnly.style.background = active ? '#dfd' : '';
+    }
     btnOnly.addEventListener('click', async () => {
       const isActive = btnOnly.dataset.active === 'true';
       btnOnly.dataset.active = (!isActive).toString();
