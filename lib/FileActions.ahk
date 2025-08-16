@@ -1,0 +1,153 @@
+; FileActions.ahk - misc file / explorer / external tool helpers
+#Requires AutoHotkey v2.0
+
+SendToAvidemux(path) {
+  global AvidemuxPath
+  try {
+    if (!FileExist(AvidemuxPath)) {
+      MsgBox "Avidemux executable not found: " . AvidemuxPath
+      return
+    }
+    if (!FileExist(path)) {
+      MsgBox "File not found: " . path
+      return
+    }
+    Run '"' . AvidemuxPath . '" "' . path . '"', , "UseErrorLevel"
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+OpenPwsh(folderPath, selectedFileName) {
+  try {
+    if (folderPath = "")
+      return
+    if !FileExist(folderPath) {
+      MsgBox "Folder not found: " . folderPath
+      return
+    }
+    pwshPath := "pwsh.exe"
+    cmd := pwshPath " -NoExit -Command Set-Location -LiteralPath '" folderPath "'"
+    Run cmd, folderPath, , &OutPid
+    WinWait "ahk_pid " OutPid
+    WinActivate
+    A_Clipboard := '"' selectedFileName '"'
+    Send("^v{Home}")
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+OpenFolder(folderPath) {
+  try {
+    if (folderPath = "")
+      return
+    if !FileExist(folderPath) {
+      MsgBox "Folder not found: " . folderPath
+      return
+    }
+    Run("explorer.exe " . Chr(34) . folderPath . Chr(34))
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+OpenExplorerSelect(pathToSelect) {
+  try {
+    if (pathToSelect = "")
+      return
+    if !FileExist(pathToSelect) {
+      MsgBox "Path not found: " . pathToSelect
+      return
+    }
+    Run("explorer.exe /select," . Chr(34) . pathToSelect . Chr(34))
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+SendToFileTagger(data) {
+  global FileTaggerPath
+  try {
+    s := ""
+    if IsObject(data) {
+      if data.HasProp("toSend")
+        s := data.toSend
+    } else {
+      s := data
+    }
+    Run FileTaggerPath "node_modules\electron\dist\electron.exe " FileTaggerPath " --files-list " '"' s '"',
+      FileTaggerPath
+  } catch as e {
+    try MsgBox "(error) " . e.Message
+  }
+}
+
+DeleteSelected() {
+  global EverythingWindowTitle, SelectedCount
+  if !WinExist(EverythingWindowTitle) {
+    MsgBox "Everything window not found."
+    return
+  }
+  WinActivate EverythingWindowTitle
+  WinWaitActive EverythingWindowTitle, , 1
+  if !WinActive(EverythingWindowTitle) {
+    MsgBox "Couldn't activate Everything."
+    return
+  }
+  status := StatusBarGetText(, EverythingWindowTitle)
+  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
+  if (!fileSelected && SelectedCount <= 0) {
+    MsgBox "No items selected to delete."
+    return
+  }
+  Send "{Delete}"
+}
+
+Explorer_GetSelected() {
+  ID := WinGetID("A")
+  shell := ComObject("Shell.Application")
+  for window in shell.Windows {
+    if (window.HWND = ID) {
+      selectedItems := window.Document.SelectedItems
+      paths := ""
+      for item in selectedItems {
+        paths .= item.Path . "`n"
+      }
+      return Trim(paths, "`n")
+    }
+  }
+  return ""
+}
+
+JoinWithNewlines(arr) {
+  result := ""
+  for i, item in arr {
+    result .= item . (i < arr.Length ? "`n" : "")
+  }
+  return result
+}
+
+GetSingleSelectedFilePath() {
+  FileName := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
+  status := StatusBarGetText(, EverythingWindowTitle)
+  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
+  currPath := fileSelected ? Path[1] "\\" FileName : ""
+  return currPath
+}
+
+GetMultipleSelectedFilePaths() {
+  WinActivate(EverythingWindowTitle)
+  A_Clipboard := ""
+  Send "^+c"
+  ClipWait(1)
+  return A_Clipboard
+}
+
+GetFolderChain(originalPath, folderPaths := []) {
+  folderPaths.Push(originalPath)
+  SplitPath(originalPath, , &parent)
+  if (originalPath = parent || parent = "")
+    return folderPaths
+  return GetFolderChain(parent, folderPaths)
+}
