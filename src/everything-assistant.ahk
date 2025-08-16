@@ -38,10 +38,6 @@ AssistantGui.Debug()
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
 
-;  MARK: Essential
-
-;  MARK: Query related
-
 ; Query manipulation functions moved to lib/QueryActions.ahk
 
 CheckEverythingActive() {
