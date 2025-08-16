@@ -30,6 +30,8 @@ export async function renderFolderButtons(items) {
 
   items.forEach(folder => {
     const row = document.createElement('div');
+    row.className = 'folder-row';
+    row.dataset.path = folder;
     row.style.display = 'flex';
     row.style.alignItems = 'center';
     row.style.gap = '8px';
@@ -41,15 +43,17 @@ export async function renderFolderButtons(items) {
 
     folderLabel.addEventListener('click', e => {
       const prev = list.querySelector('.folder-item.selected');
+      const existingToolbar = list.querySelector('.folder-toolbar-row');
       const isSame = prev === folderLabel;
       if (prev) prev.classList.remove('selected');
+      if (existingToolbar) existingToolbar.remove();
       if (isSame) {
-        // deselect
-        els.secondary.innerHTML = '';
-      } else {
-        folderLabel.classList.add('selected');
-        renderFolderToolbar(folder, fileName);
+        // deselect -> toolbar removed above
+        return;
       }
+      // select new
+      folderLabel.classList.add('selected');
+      renderFolderToolbar(row, folder, fileName, list);
     });
 
     row.appendChild(folderLabel);
@@ -59,9 +63,14 @@ export async function renderFolderButtons(items) {
   els.actions.appendChild(list);
 }
 
-async function renderFolderToolbar(folder, fileName) {
-  els.secondary.innerHTML = '';
-  // label
+async function renderFolderToolbar(row, folder, fileName, list) {
+  // create a toolbar row inserted after the clicked folder row
+  const toolbar = document.createElement('div');
+  toolbar.className = 'folder-toolbar-row';
+  toolbar.style.display = 'flex';
+  toolbar.style.flexDirection = 'column';
+  toolbar.style.gap = '6px';
+
   const lbl = document.createElement('div');
   lbl.className = 'mono-dim';
   lbl.textContent = `Folder: ${folder}`;
@@ -118,6 +127,17 @@ async function renderFolderToolbar(folder, fileName) {
   group.appendChild(btnOnly);
   group.appendChild(btnPwsh);
 
-  els.secondary.appendChild(lbl);
-  els.secondary.appendChild(group);
+  toolbar.appendChild(lbl);
+  toolbar.appendChild(group);
+
+  // insert after the folder row
+  row.after(toolbar);
+
+  // ensure only one toolbar exists at a time
+  const other = list.querySelectorAll('.folder-toolbar-row');
+  if (other.length > 1) {
+    other.forEach((el, idx) => {
+      if (idx < other.length - 1) el.remove();
+    });
+  }
 }
