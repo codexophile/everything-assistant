@@ -103,7 +103,7 @@ CheckEverythingActive() {
 
         LastSelectedPath := currPath
         LastSelectedName := currName
-  LastFileContext := "everything" ; reinforce context when updating
+        LastFileContext := "everything" ; reinforce context when updating
 
         ; Update chapter metadata (Everything context) - helper will handle conditions
         UpdateChaptersMetadata(false)
@@ -169,7 +169,7 @@ CheckEverythingActive() {
 
         LastSelectedPath := selectedPaths
         LastSelectedName := "" ; Reset this to ensure change detection works across apps
-  LastFileContext := "explorer" ; reinforce context when updating
+        LastFileContext := "explorer" ; reinforce context when updating
 
         ; Update chapter metadata (Explorer context)
         UpdateChaptersMetadata(true)

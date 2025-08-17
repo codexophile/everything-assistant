@@ -86,7 +86,8 @@ SendToFileTagger(data) {
 DeleteSelected() {
   global EverythingWindowTitle, SelectedCount, LastFileContext, SelectedFilePath, LastSelectedPath
   ; Prefer Explorer when we have cached multi-line LastSelectedPath or a single SelectedFilePath that is not empty and Explorer window exists.
-  if (WinExist("ahk_class CabinetWClass") && (LastFileContext = "explorer" || (LastSelectedPath != "" && InStr(LastSelectedPath, "`n") || (SelectedFilePath != "" && !WinActive(EverythingWindowTitle))))) {
+  if (WinExist("ahk_class CabinetWClass") && (LastFileContext = "explorer" || (LastSelectedPath != "" && InStr(
+    LastSelectedPath, "`n") || (SelectedFilePath != "" && !WinActive(EverythingWindowTitle))))) {
     explorerHwnd := WinExist("ahk_class CabinetWClass")
     WinActivate explorerHwnd
     WinWaitActive "ahk_class CabinetWClass", , 1
@@ -144,7 +145,8 @@ JoinWithNewlines(arr) {
 
 GetSingleSelectedFilePath() {
   global LastFileContext, SelectedFilePath, SelectedCount, LastSelectedPath, EverythingWindowTitle
-  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && SelectedFilePath != "" && !WinActive(EverythingWindowTitle))) {
+  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && SelectedFilePath != "" && !WinActive(
+    EverythingWindowTitle))) {
     if (SelectedCount = 1)
       return SelectedFilePath
     ; If multiple selected in Explorer, still return the primary path (first) for single-file actions
@@ -164,7 +166,8 @@ GetSingleSelectedFilePath() {
 
 GetMultipleSelectedFilePaths() {
   global LastFileContext, LastSelectedPath, EverythingWindowTitle
-  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && LastSelectedPath != "" && !WinActive(EverythingWindowTitle))) {
+  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && LastSelectedPath != "" && !WinActive(
+    EverythingWindowTitle))) {
     return LastSelectedPath  ; newline-delimited list already cached
   }
   WinActivate(EverythingWindowTitle)
