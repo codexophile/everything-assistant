@@ -84,39 +84,8 @@ SendToFileTagger(data) {
 }
 
 DeleteSelected() {
-  global EverythingWindowTitle, SelectedCount, LastFileContext, SelectedFilePath, LastSelectedPath
-  ; Prefer Explorer when we have cached multi-line LastSelectedPath or a single SelectedFilePath that is not empty and Explorer window exists.
-  if (WinExist("ahk_class CabinetWClass") && (LastFileContext = "explorer" || (LastSelectedPath != "" && InStr(
-    LastSelectedPath, "`n") || (SelectedFilePath != "" && !WinActive(EverythingWindowTitle))))) {
-    explorerHwnd := WinExist("ahk_class CabinetWClass")
-    WinActivate explorerHwnd
-    WinWaitActive "ahk_class CabinetWClass", , 1
-    if (SelectedCount <= 0 && LastSelectedPath = "") {
-      MsgBox "No items selected to delete."
-      return
-    }
-    Send "{Delete}"
-    return
-  }
-
-  ; Everything deletion (existing behavior)
-  if !WinExist(EverythingWindowTitle) {
-    MsgBox "Everything window not found."
-    return
-  }
-  WinActivate EverythingWindowTitle
-  WinWaitActive EverythingWindowTitle, , 1
-  if !WinActive(EverythingWindowTitle) {
-    MsgBox "Couldn't activate Everything."
-    return
-  }
-  status := StatusBarGetText(, EverythingWindowTitle)
-  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
-  if (!fileSelected && SelectedCount <= 0) {
-    MsgBox "No items selected to delete."
-    return
-  }
-  Send "{Delete}"
+  global SelectedFilePath, selectedFileName
+  FileRecycle(SelectedFilePath "\" selectedFileName)
 }
 
 Explorer_GetSelected() {
