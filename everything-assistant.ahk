@@ -13,6 +13,9 @@ AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
 AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
+; Tracks which file browser (Everything / Explorer) was last active so that
+; when the Assistant window itself is focused we still reflect the correct context
+LastFileContext := "everything"  ; default
 
 ; Hotkeys
 ; Alt+Shift+C -> Clean the current Everything query (remove &, commas, square brackets, tidy spaces)
@@ -45,8 +48,31 @@ CheckEverythingActive() {
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
   global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson, SelectedFileDuration
   global EverythingWindowTitle, AssistantWindowTitle
+  LastFileContext := ""  ; Reset last context on each check
 
-  if WinActive(EverythingWindowTitle) OR WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
+  ; Track which underlying window (Everything or Explorer) was last active
+  if WinActive(EverythingWindowTitle) {
+    LastFileContext := "everything"
+  } else if WinActive("ahk_class CabinetWClass") {
+    LastFileContext := "explorer"
+  }
+
+  usingEverything := false
+  usingExplorer := false
+
+  if WinActive(EverythingWindowTitle) {
+    usingEverything := true
+  } else if WinActive("ahk_class CabinetWClass") {
+    usingExplorer := true
+  } else if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
+    ; Assistant (or its DevTools) is active – defer to last active context
+    if (LastFileContext = "everything")
+      usingEverything := true
+    else if (LastFileContext = "explorer")
+      usingExplorer := true
+  }
+
+  if (usingEverything) {
     try {
       status := StatusBarGetText(, EverythingWindowTitle)
     } catch {
@@ -99,7 +125,7 @@ CheckEverythingActive() {
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
-  } else if WinActive("ahk_class CabinetWClass") { ; Windows Explorer
+  } else if (usingExplorer) { ; Windows Explorer context
     selectedPaths := Explorer_GetSelected()
 
     if (selectedPaths != LastSelectedPath) {
