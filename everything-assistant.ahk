@@ -34,7 +34,7 @@ SelectedChaptersJson := ""  ; JSON array of chapter objects parsed from .ffmetad
 SelectedFileDuration := ""  ; Duration in seconds or formatted string
 
 ; GUI setup
-AssistantGui := WebViewGui("Resize AlwaysOnTop")
+AssistantGui := WebViewGui("Resize")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
 AssistantGui.Debug()
