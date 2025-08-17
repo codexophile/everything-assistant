@@ -12,6 +12,7 @@ EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
 AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
+ElectronSubPath := "node_modules\electron\dist\electron.exe"
 AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
 ; Tracks which file browser (Everything / Explorer) was last active so that
 ; when the Assistant window itself is focused we still reflect the correct context

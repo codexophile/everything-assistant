@@ -76,7 +76,7 @@ SendToFileTagger(data) {
     } else {
       s := data
     }
-    Run FileTaggerPath "node_modules\electron\dist\electron.exe " FileTaggerPath " --files-list " '"' s '"',
+    Run FileTaggerPath ElectronSubPath " " FileTaggerPath " --files-list " '"' s '"',
       FileTaggerPath
   } catch as e {
     try MsgBox "(error) " . e.Message
@@ -144,24 +144,8 @@ JoinWithNewlines(arr) {
 }
 
 GetSingleSelectedFilePath() {
-  global LastFileContext, SelectedFilePath, SelectedCount, LastSelectedPath, EverythingWindowTitle
-  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && SelectedFilePath != "" && !WinActive(
-    EverythingWindowTitle))) {
-    if (SelectedCount = 1)
-      return SelectedFilePath
-    ; If multiple selected in Explorer, still return the primary path (first) for single-file actions
-    if (SelectedCount > 1) {
-      first := StrSplit(LastSelectedPath, "`n")[1]
-      return first
-    }
-    return ""
-  }
-  ; Everything context
-  FileName := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
-  status := StatusBarGetText(, EverythingWindowTitle)
-  fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
-  currPath := (fileSelected && FileName != "") ? Path[1] "\\" FileName : ""
-  return currPath
+  SelectedFileFullPath := SelectedFilePath "\" selectedFileName
+  return SelectedFileFullPath
 }
 
 GetMultipleSelectedFilePaths() {
