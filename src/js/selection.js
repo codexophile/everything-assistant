@@ -33,7 +33,11 @@ export async function renderSelection() {
     if (count > 1) {
       els.summary.innerHTML = `<span class="badge bg-primary">${count} items selected</span>`;
       els.name.style.display = '';
-      els.name.innerText = (namesAll || '').split('\n').slice(0, 10).join('\n');
+      els.name.classList.add('truncate-1');
+      els.name.title = (namesAll || '').split('\n').slice(0, 10).join(', ');
+      els.name.innerText = (namesAll || '').split('\n').slice(0, 10).join(', ');
+      els.path.classList.add('truncate-1');
+      els.path.title = '(multiple paths)';
       els.path.innerText = '(multiple paths)';
       els.duration.style.display = 'none';
       els.actions.innerHTML = '';
@@ -46,7 +50,11 @@ export async function renderSelection() {
       els.summary.innerHTML =
         '<span class="badge bg-success">1 item selected</span>';
       els.name.style.display = '';
+      els.name.classList.add('truncate-1');
+      els.name.title = fileName || '';
       els.name.innerText = fileName || '';
+      els.path.classList.add('truncate-1');
+      els.path.title = filePath && filePath.trim() ? filePath : '(no path)';
       els.path.innerText = filePath && filePath.trim() ? filePath : '(no path)';
 
       if (duration && duration.trim()) {
