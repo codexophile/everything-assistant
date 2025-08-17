@@ -125,42 +125,46 @@ CheckEverythingActive() {
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
-  } else if (usingExplorer) { ; Windows Explorer context
-    selectedPaths := Explorer_GetSelected()
+  } else if (usingExplorer) { ; Windows Explorer context (may or may not be active now)
+    explorerActive := WinActive("ahk_class CabinetWClass")
+    if (explorerActive) {
+      ; Only attempt to read selection while Explorer is active; otherwise keep cached values.
+      selectedPaths := Explorer_GetSelected()
 
-    if (selectedPaths != LastSelectedPath) {
-      currCount := (selectedPaths != "") ? StrSplit(selectedPaths, "`n").Length : 0
-      currPath := ""
-      currName := ""
-      names := ""
+      if (selectedPaths != LastSelectedPath) {
+        currCount := (selectedPaths != "") ? StrSplit(selectedPaths, "`n").Length : 0
+        currPath := ""
+        currName := ""
+        names := ""
 
-      if (currCount = 1) {
-        currPath := selectedPaths
-        SplitPath(currPath, &currName)
-        names := currName
-      } else if (currCount > 1) {
-        pathsList := StrSplit(selectedPaths, "`n")
-        namesList := []
-        for path in pathsList {
-          SplitPath(path, &name)
-          namesList.Push(name)
+        if (currCount = 1) {
+          currPath := selectedPaths
+          SplitPath(currPath, &currName)
+          names := currName
+        } else if (currCount > 1) {
+          pathsList := StrSplit(selectedPaths, "`n")
+          namesList := []
+          for path in pathsList {
+            SplitPath(path, &name)
+            namesList.Push(name)
+          }
+          names := JoinWithNewlines(namesList)
         }
-        names := JoinWithNewlines(namesList)
+
+        SelectedFilePath := currPath
+        SelectedFileName := currName
+        SelectedNames := names
+        SelectedCount := currCount
+
+        SetSelectedFolderChainIfSingle()
+
+        LastSelectedPath := selectedPaths
+        LastSelectedName := "" ; Reset this to ensure change detection works across apps
+
+        ; Update chapter metadata (Explorer context)
+        UpdateChaptersMetadata(true)
+        AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
       }
-
-      SelectedFilePath := currPath
-      SelectedFileName := currName
-      SelectedNames := names
-      SelectedCount := currCount
-
-      SetSelectedFolderChainIfSingle()
-
-      LastSelectedPath := selectedPaths
-      LastSelectedName := "" ; Reset this to ensure change detection works across apps
-
-      ; Update chapter metadata (Explorer context)
-      UpdateChaptersMetadata(true)
-      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
     AssistantGui.Show("w600 h600 NoActivate")
