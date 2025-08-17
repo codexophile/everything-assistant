@@ -2,20 +2,34 @@
 <html>
 
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <!-- Font Awesome CDN (no SRI to avoid blocking in WebView) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     referrerpolicy="no-referrer" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    /* layout */
-    div {
-      margin-bottom: 0.5em;
+    :root {
+      --primary-color: #0d6efd;
+      --secondary-color: #6c757d;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --light-bg: #f8f9fa;
+      --border-radius: 0.375rem;
     }
 
+    body {
+      background-color: var(--light-bg);
+    }
+
+    /* layout refinements */
     #main-toolbar,
     #secondary-toolbar {
       display: flex;
       gap: 6px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     /* icon buttons */
@@ -24,124 +38,173 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 4px;
+      padding: 6px 12px;
       line-height: 1;
-      min-width: 28px;
-      min-height: 28px;
+      min-width: 36px;
+      min-height: 36px;
+      transition: all 0.2s;
+      border-radius: var(--border-radius);
     }
 
-    #main-toolbar .icon-btn i,
-    #secondary-toolbar button i {
+    .icon-btn i {
       font-size: 16px;
     }
 
     /* monospace helpers */
     .mono {
       white-space: pre-line;
-      font-family: Consolas, monospace;
-      font-size: 12px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.875rem;
       color: #333;
     }
 
     .mono-dim {
-      color: #444;
+      color: #666;
     }
 
     /* folder action buttons */
     .folder-btn {
-      font-family: Consolas, monospace;
-      font-size: 12px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.875rem;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
+      border: 1px solid #dee2e6;
+      background-color: #fff;
+    }
+
+    .folder-btn:hover {
+      background-color: #f0f0f0;
     }
 
     .folder-btn.excluded {
-      background: #fdd;
+      background-color: #f8d7da;
+      border-color: #f5c2c7;
     }
 
     /* folder chain items (selectable) */
     .folder-item {
       cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--border-radius);
+      transition: all 0.2s;
+      font-size: 0.875rem;
     }
 
     .folder-item:hover {
-      background: #f5f5f5;
+      background-color: rgba(13, 110, 253, 0.1);
     }
 
     .folder-item.selected {
-      background: #def;
-      outline: 1px solid #9ec;
+      background-color: rgba(13, 110, 253, 0.2);
+      border-left: 3px solid var(--primary-color);
     }
 
     .folder-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 2px 4px;
+      padding: 0.375rem 0.5rem;
     }
 
     .folder-toolbar-row {
-      padding: 6px 8px;
-      background: #fbfbfb;
-      border-left: 2px solid transparent;
-      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      background-color: #f8f9fa;
+      border-left: 3px solid var(--primary-color);
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      margin: 0.5rem 0 1rem 1rem;
     }
 
     /* tags */
     #tags-container {
-      display: none;
+      margin-top: 0.75rem;
     }
 
     #tags {
       display: flex;
-      gap: 4px;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
 
     .tag-chip {
-      font-family: Consolas, monospace;
-      font-size: 11px;
-      padding: 1px 6px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
       border-radius: 999px;
-      border: 1px solid #cfe;
-      background: #eef;
-      color: #224;
+      background-color: rgba(13, 110, 253, 0.15);
+      color: var(--primary-color);
+      border: 1px solid rgba(13, 110, 253, 0.3);
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .tag-chip:hover {
+      background-color: rgba(13, 110, 253, 0.25);
+    }
+
+    /* Card styling for content sections */
+    .content-card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 
 <body>
-  <div id="main-toolbar">
-    <button id="btn-delete" class="icon-btn" title="Delete selected files"></button>
-    <button id="btn-tag" class="icon-btn" title="Tag selected files"></button>
-    <button id="btn-avidemux" class="icon-btn" title="Send to Avidemux"></button>
-    <!-- Reload button moved out of toolbar for floating placement -->
+  <div class="container py-4">
+    <div class="d-flex align-items-center mb-3">
+      <h1 class="h4 m-0 fw-bold text-primary flex-grow-1">Everything Assistant</h1>
+    </div>
+
+    <div class="content-card">
+      <div id="main-toolbar" class="mb-3">
+        <button id="btn-delete" class="icon-btn btn btn-outline-danger" title="Delete selected files">
+          <i class="fa-solid fa-trash me-1"></i> Delete
+        </button>
+        <button id="btn-tag" class="icon-btn btn btn-outline-primary" title="Tag selected files">
+          <i class="fa-solid fa-tag me-1"></i> Tag
+        </button>
+        <button id="btn-avidemux" class="icon-btn btn btn-outline-secondary" title="Send to Avidemux">
+          <i class="fa-solid fa-video me-1"></i> Avidemux
+        </button>
+      </div>
+
+      <div id="secondary-toolbar" class="mb-2"></div>
+    </div>
+
+    <div class="content-card" id="file-info">
+      <h5 class="h6 mb-2 fw-bold">File Information</h5>
+      <div id="sel-summary" class="fw-semibold">(none)</div>
+      <div id="sel-name" class="mono mb-1" style="display:none"></div>
+      <div id="sel-path" class="mono mono-dim mb-1">(no path)</div>
+      <div id="sel-duration" class="mono mono-dim" style="display:none"></div>
+      <div id="tags" class="mt-2 d-flex gap-1 flex-wrap"></div>
+    </div>
+
+    <div class="content-card" id="file-actions">
+      <h5 class="h6 mb-2 fw-bold">Available Actions</h5>
+      <div class="file-actions-container">
+        <div class="alert alert-info">Select a file to view available actions</div>
+      </div>
+    </div>
+
+    <div class="content-card" id="chapters-section" style="display:none">
+      <h5 class="h6 mb-2 fw-bold">Chapters</h5>
+      <div id="chapters-list" class="mono"
+        style="font-size:11px; max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
   </div>
+
   <!-- Floating reload button -->
   <button id="btn-reload" class="icon-btn reload-fab" title="Reload">
     <i class="fa-solid fa-rotate-right"></i>
   </button>
-  <div id="secondary-toolbar"></div>
-  <hr />
-  <div id="file-info">
-    <div id="sel-summary">(none)</div>
-    <div id="sel-name" class="mono" style="display:none"></div>
-    <div id="sel-path" class="mono mono-dim">(no path)</div>
-    <div id="sel-duration" class="mono mono-dim" style="display:none"></div>
-    <div id="tags"></div>
-  </div>
-  <hr />
-  <div id="file-actions">
-  </div>
-  <hr />
-  <div id="chapters-section" style="display:none">
-    <div class="mono-dim">Chapters:</div>
-    <div id="chapters-list" class="mono"
-      style="font-size:11px; max-height:200px; overflow:auto; display:flex; flex-direction:column; gap:4px;"></div>
-  </div>
+
   <script type="module" src="./app.js"></script>
 </body>
 <style>
@@ -151,51 +214,95 @@
     right: 32px;
     bottom: 32px;
     z-index: 1000;
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: #4caf50;
+    background-color: var(--success-color);
     color: #fff;
-    font-size: 22px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    font-size: 1.25rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: all 0.3s;
     border: none;
     cursor: pointer;
   }
 
   .reload-fab:hover {
-    background: #388e3c;
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .reload-fab:active {
+    transform: scale(0.95);
   }
 
   .reload-fab i {
-    font-size: 1.3em;
+    font-size: 1.5rem;
     pointer-events: none;
   }
 
   #chapters-list .chapter-row {
     display: flex;
-    gap: 6px;
+    gap: 12px;
     align-items: center;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 8px;
+    border-radius: var(--border-radius);
+    transition: all 0.2s;
+  }
+
+  #chapters-list .chapter-row:hover {
+    background: rgba(0, 0, 0, 0.05);
   }
 
   #chapters-list img {
-    width: 72px;
-    height: 72px;
-    /* make thumbnails square */
+    width: 80px;
+    height: 80px;
     aspect-ratio: 1 / 1;
     object-fit: cover;
-    /* crop to fill square */
-    border: 1px solid #ccc;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   #chapters-list .chap-text {
     display: flex;
     flex-direction: column;
-    line-height: 1.1;
+    line-height: 1.3;
+  }
+
+  /* Custom styles for toolbar buttons with text + icon */
+  .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 576px) {
+    .container {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .icon-btn {
+      padding: 4px 8px;
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    .reload-fab {
+      right: 16px;
+      bottom: 16px;
+      width: 48px;
+      height: 48px;
+    }
   }
 </style>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </html>

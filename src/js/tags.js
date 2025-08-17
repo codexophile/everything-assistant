@@ -16,19 +16,24 @@ export function extractTagsFromNamesList(namesList) {
 export function renderTags(tags) {
   const tagsEl = els.tags;
   if (!tagsEl || !els.tagsContainer) return;
+
   if (tags && tags.length) {
     tagsEl.innerHTML = '';
+
     for (const t of tags) {
       const chip = document.createElement('span');
       chip.className = 'tag-chip';
       chip.textContent = t;
       chip.title = `Search for tag: ${t}`;
       chip.style.cursor = 'pointer';
+
       chip.addEventListener('click', () => {
         window.open(`es:${encodeURIComponent(`[${t}]`)}`, '_blank');
       });
+
       tagsEl.appendChild(chip);
     }
+
     els.tagsContainer.style.display = 'block';
   } else {
     tagsEl.innerHTML = '';

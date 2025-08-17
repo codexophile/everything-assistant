@@ -2,7 +2,13 @@ import { els } from './dom.js';
 import { setIcon } from './icons.js';
 
 function setExcludedStyle(btn, excluded) {
-  btn.classList.toggle('excluded', !!excluded);
+  if (excluded) {
+    btn.classList.remove('btn-outline-danger');
+    btn.classList.add('btn-danger');
+  } else {
+    btn.classList.add('btn-outline-danger');
+    btn.classList.remove('btn-danger');
+  }
 }
 async function isExcluded(folder) {
   const curr = await ahk.getControlText('Edit1', 'ahk_class EVERYTHING_(1.5a)');
@@ -12,24 +18,25 @@ async function isExcluded(folder) {
 
 export async function renderFolderButtons(items) {
   if (!items?.length) {
-    els.actions.innerHTML = '';
+    els.actions.innerHTML =
+      '<div class="alert alert-info">No folder actions available</div>';
     els.secondary.innerHTML = '';
     return;
   }
+
   const fileName = await ahk.global.SelectedFileName;
   els.actions.innerHTML = '';
   els.secondary.innerHTML = '';
+
+  // Create a container for folders
   const list = document.createElement('div');
-  list.style.display = 'flex';
-  list.style.flexDirection = 'column';
-  list.style.gap = '6px';
+  list.className = 'd-flex flex-column gap-2';
+
   items.forEach(folder => {
     const row = document.createElement('div');
     row.className = 'folder-row';
     row.dataset.path = folder;
-    row.style.display = 'flex';
-    row.style.alignItems = 'center';
-    row.style.gap = '8px';
+
     const folderLabel = document.createElement('span');
     folderLabel.className = 'folder-item mono';
     folderLabel.textContent = folder;
@@ -38,35 +45,41 @@ export async function renderFolderButtons(items) {
       const prev = list.querySelector('.folder-item.selected');
       const existingToolbar = list.querySelector('.folder-toolbar-row');
       const isSame = prev === folderLabel;
+
       if (prev) prev.classList.remove('selected');
       if (existingToolbar) existingToolbar.remove();
       if (isSame) return; // deselect
+
       folderLabel.classList.add('selected');
       renderFolderToolbar(row, folder, fileName, list);
     });
+
     row.appendChild(folderLabel);
     list.appendChild(row);
   });
-  els.actions.appendChild(list);
+
+  // Place the list inside a container in file-actions div
+  const actionsContainer =
+    els.actions.querySelector('.file-actions-container') || els.actions;
+  actionsContainer.appendChild(list);
 }
 
 async function renderFolderToolbar(row, folder, fileName, list) {
   const toolbar = document.createElement('div');
   toolbar.className = 'folder-toolbar-row';
-  toolbar.style.display = 'flex';
-  toolbar.style.flexDirection = 'column';
-  toolbar.style.gap = '6px';
+
   const lbl = document.createElement('div');
-  lbl.className = 'mono-dim';
+  lbl.className = 'mono-dim mb-2';
   lbl.textContent = `Folder: ${folder}`;
+
   const group = document.createElement('div');
-  group.style.display = 'flex';
-  group.style.gap = '6px';
-  group.style.alignItems = 'center';
+  group.className = 'd-flex flex-wrap gap-2 align-items-center';
 
   const btnExclude = document.createElement('button');
-  btnExclude.className = 'icon-btn';
-  setIcon(btnExclude, 'ban', `Toggle exclusion for ${folder}`);
+  btnExclude.className = 'icon-btn btn btn-sm btn-outline-danger';
+  btnExclude.title = `Toggle exclusion for ${folder}`;
+  btnExclude.innerHTML = '<i class="fa-solid fa-ban me-1"></i> Exclude';
+
   (async () => setExcludedStyle(btnExclude, await isExcluded(folder)))();
   btnExclude.addEventListener('click', async () => {
     await ahk.global.ToggleExcludeFolder(folder);
@@ -74,12 +87,21 @@ async function renderFolderToolbar(row, folder, fileName, list) {
   });
 
   const btnOnly = document.createElement('button');
-  btnOnly.className = 'icon-btn';
-  setIcon(btnOnly, 'search', `Toggle search only in ${folder}`);
+  btnOnly.className = 'icon-btn btn btn-sm btn-outline-primary';
+  btnOnly.title = `Toggle search only in ${folder}`;
+  btnOnly.innerHTML = '<i class="fa-solid fa-search me-1"></i> Search Only';
   btnOnly.dataset.active = 'false';
+
   function setOnlyStyleActive(active) {
-    btnOnly.style.background = active ? '#dfd' : '';
+    if (active) {
+      btnOnly.classList.remove('btn-outline-primary');
+      btnOnly.classList.add('btn-primary');
+    } else {
+      btnOnly.classList.add('btn-outline-primary');
+      btnOnly.classList.remove('btn-primary');
+    }
   }
+
   btnOnly.addEventListener('click', async () => {
     const isActive = btnOnly.dataset.active === 'true';
     btnOnly.dataset.active = (!isActive).toString();
@@ -93,8 +115,9 @@ async function renderFolderToolbar(row, folder, fileName, list) {
   setOnlyStyleActive(false);
 
   const btnPwsh = document.createElement('button');
-  btnPwsh.className = 'icon-btn';
-  setIcon(btnPwsh, 'pwsh', `Open PowerShell in ${folder}`);
+  btnPwsh.className = 'icon-btn btn btn-sm btn-outline-secondary';
+  btnPwsh.title = `Open PowerShell in ${folder}`;
+  btnPwsh.innerHTML = '<i class="fa-solid fa-terminal me-1"></i> PowerShell';
   btnPwsh.addEventListener('click', async () => {
     try {
       if (window.ahk?.global?.OpenPwsh) {
@@ -108,9 +131,9 @@ async function renderFolderToolbar(row, folder, fileName, list) {
   });
 
   const btnOpen = document.createElement('button');
-  btnOpen.className = 'icon-btn';
+  btnOpen.className = 'icon-btn btn btn-sm btn-outline-secondary';
   btnOpen.title = `Open ${folder} in Explorer`;
-  btnOpen.innerHTML = '<i class="fa-solid fa-folder-open"></i>';
+  btnOpen.innerHTML = '<i class="fa-solid fa-folder-open me-1"></i> Explorer';
   btnOpen.addEventListener('click', async () => {
     try {
       if (window.ahk?.global?.OpenFolder) {
@@ -126,9 +149,10 @@ async function renderFolderToolbar(row, folder, fileName, list) {
   });
 
   const btnOpenParentSelect = document.createElement('button');
-  btnOpenParentSelect.className = 'icon-btn';
+  btnOpenParentSelect.className = 'icon-btn btn btn-sm btn-outline-secondary';
   btnOpenParentSelect.title = `Open parent folder and select ${folder}`;
-  btnOpenParentSelect.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i>';
+  btnOpenParentSelect.innerHTML =
+    '<i class="fa-solid fa-file-arrow-up me-1"></i> Parent';
   btnOpenParentSelect.addEventListener('click', async () => {
     try {
       if (window.ahk?.global?.OpenExplorerSelect) {
@@ -146,10 +170,12 @@ async function renderFolderToolbar(row, folder, fileName, list) {
   });
 
   const nodes = [btnExclude, btnOnly, btnPwsh, btnOpen, btnOpenParentSelect];
-  const groupAdd = nodes.forEach(n => group.appendChild(n));
+  nodes.forEach(n => group.appendChild(n));
+
   toolbar.appendChild(lbl);
   toolbar.appendChild(group);
   row.after(toolbar);
+
   const other = list.querySelectorAll('.folder-toolbar-row');
   if (other.length > 1)
     other.forEach((el, idx) => {

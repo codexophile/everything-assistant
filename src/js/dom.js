@@ -2,23 +2,30 @@
 function createTagsContainerIfNeeded() {
   const existing = document.querySelector('#tags-container');
   if (existing) return existing;
+
   const fileInfo = document.querySelector('#file-info');
   if (!fileInfo) return null;
+
   let tags = document.querySelector('#tags');
   if (!tags) {
     tags = document.createElement('div');
     tags.id = 'tags';
+    tags.className = 'mt-2 d-flex gap-1 flex-wrap';
     fileInfo.appendChild(tags);
   }
+
   const wrap = document.createElement('div');
   wrap.id = 'tags-container';
+  wrap.className = 'mt-3';
+
   const label = document.createElement('div');
-  label.className = 'mono-dim';
+  label.className = 'mono-dim mb-1 fw-semibold';
   label.textContent = 'Tags:';
+
   tags.replaceWith(wrap);
   wrap.appendChild(label);
   wrap.appendChild(tags);
-  fileInfo.after(wrap);
+
   return wrap;
 }
 

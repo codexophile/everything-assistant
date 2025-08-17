@@ -6,8 +6,10 @@ import { fullUpdate } from './src/js/selection.js';
 function initSecondaryToolbar() {
   const btnExclude = document.createElement('button');
   btnExclude.id = 'btn-exclude-folders';
+  btnExclude.className = 'icon-btn btn btn-outline-secondary';
   btnExclude.title = 'Exclude folders (!folder:)';
-  setIcon(btnExclude, 'folderMinus', 'Exclude folders (!folder:)');
+  btnExclude.innerHTML =
+    '<i class="fa-solid fa-folder-minus me-1"></i> Exclude Folders';
   els.secondary.appendChild(btnExclude);
   btnExclude.addEventListener('click', async () => {
     try {
@@ -19,8 +21,9 @@ function initSecondaryToolbar() {
 
   const btnCleanQuery = document.createElement('button');
   btnCleanQuery.id = 'btn-clean-query';
+  btnCleanQuery.className = 'icon-btn btn btn-outline-secondary';
   btnCleanQuery.title = 'Clean query';
-  setIcon(btnCleanQuery, 'ban', 'Clean query');
+  btnCleanQuery.innerHTML = '<i class="fa-solid fa-ban me-1"></i> Clean Query';
   els.secondary.appendChild(btnCleanQuery);
   btnCleanQuery.addEventListener('click', async () => {
     await ahk.global.CleanQuery();
@@ -28,9 +31,10 @@ function initSecondaryToolbar() {
 }
 
 function initPrimaryToolbar() {
-  setIcon(els.btnDelete, 'trash', 'Delete selected files');
-  setIcon(els.btnTag, 'tag', 'Tag selected files');
-  setIcon(els.btnAvidemux, 'avidemux', 'Send to Avidemux');
+  // Using Bootstrap styling instead of setIcon
+  els.btnDelete.innerHTML = '<i class="fa-solid fa-trash me-1"></i> Delete';
+  els.btnTag.innerHTML = '<i class="fa-solid fa-tag me-1"></i> Tag';
+  els.btnAvidemux.innerHTML = '<i class="fa-solid fa-video me-1"></i> Avidemux';
 
   els.btnDelete.addEventListener('click', async () => {
     try {
