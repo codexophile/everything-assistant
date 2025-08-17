@@ -67,7 +67,6 @@ OpenExplorerSelect(pathToSelect) {
 }
 
 SendToFileTagger(data) {
-  global FileTaggerPath
   try {
     s := ""
     if IsObject(data) {
