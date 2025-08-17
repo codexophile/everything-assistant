@@ -37,11 +37,7 @@ function initPrimaryToolbar() {
   els.btnAvidemux.innerHTML = '<i class="fa-solid fa-video me-1"></i> Avidemux';
 
   els.btnDelete.addEventListener('click', async () => {
-    try {
-      await ahk.global.DeleteSelected();
-    } catch (e) {
-      console.error('DeleteSelected failed', e);
-    }
+    await ahk.global.DeleteSelected();
   });
   els.btnTag.addEventListener('click', async () => {
     try {

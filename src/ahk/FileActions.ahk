@@ -84,8 +84,22 @@ SendToFileTagger(data) {
 }
 
 DeleteSelected() {
-  global SelectedFilePath, selectedFileName
-  FileRecycle(SelectedFilePath "\" selectedFileName)
+  global SelectedCount, SelectedFilePath, selectedFileName
+  if (SelectedCount == 1) {
+    FileRecycle(SelectedFilePath "\" selectedFileName)
+  }
+  else if (SelectedCount > 1) {
+    Paths := GetMultipleSelectedFilePaths()
+    loop parse Paths, "`n`r" {
+      if (A_LoopField == "")
+        continue
+      try FileRecycle A_LoopField
+      catch as error {
+        MsgBox "Failed to recycle: " . A_LoopField . "`nError: " . error.Message
+      }
+
+    }
+  }
 }
 
 Explorer_GetSelected() {
