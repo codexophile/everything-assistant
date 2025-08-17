@@ -47,8 +47,8 @@ CheckEverythingActive() {
   global AssistantGui
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
   global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson, SelectedFileDuration
-  global EverythingWindowTitle, AssistantWindowTitle
-  LastFileContext := ""  ; Reset last context on each check
+  global EverythingWindowTitle, AssistantWindowTitle, LastFileContext
+  ; Do NOT reset LastFileContext each tick; we need it when Assistant is focused.
 
   ; Track which underlying window (Everything or Explorer) was last active
   if WinActive(EverythingWindowTitle) {
@@ -165,19 +165,15 @@ CheckEverythingActive() {
 
     AssistantGui.Show("w600 h600 NoActivate")
   } else {
-    if (LastSelectedPath != "" || LastSelectedName != "") {
-      ; Clear selection state and notify
-      SelectedFilePath := ""
-      SelectedFileName := ""
-      SelectedNames := ""
-      SelectedCount := 0
-      SelectedFolderPaths := ""
-      LastSelectedPath := ""
-      LastSelectedName := ""
-      SelectedChaptersJson := ""
-      SelectedFileDuration := ""
-      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+    ; No recognized context window active (Everything/Explorer). If Assistant itself
+    ; has focus we keep showing it with the last known selection. Otherwise we can
+    ; choose to hide without clearing selection (preserving state for when Assistant
+    ; is re-activated). Comment/uncomment behavior as desired.
+    if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
+      AssistantGui.Show("w600 h600") ; Keep visible while focused
+    } else {
+      ; Optionally hide but keep selection data so it reappears intact
+      ; AssistantGui.Hide()
     }
-    AssistantGui.Hide()
   }
 }
