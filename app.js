@@ -1,7 +1,7 @@
 // App orchestrator (moved into lib)
-import { setIcon } from './js/icons.js';
-import { els } from './js/dom.js';
-import { fullUpdate } from './js/selection.js';
+import { setIcon } from './src/js/icons.js';
+import { els } from './src/js/dom.js';
+import { fullUpdate } from './src/js/selection.js';
 
 function initSecondaryToolbar() {
   const btnExclude = document.createElement('button');

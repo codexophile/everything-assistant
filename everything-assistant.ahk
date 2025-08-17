@@ -1,11 +1,11 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
-#Include ..\..\#lib\WebViewToo\WebViewToo.ahk
+#Include ..\#lib\WebViewToo\WebViewToo.ahk
 ; Local modules
-#Include ./ahk/WindowHelpers.ahk
-#Include ./ahk/QueryActions.ahk
-#Include ./ahk/Chapters.ahk
-#Include ./ahk/FileActions.ahk
+#Include ./src/ahk/WindowHelpers.ahk
+#Include ./src/ahk/QueryActions.ahk
+#Include ./src/ahk/Chapters.ahk
+#Include ./src/ahk/FileActions.ahk
 
 ; Constants
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
