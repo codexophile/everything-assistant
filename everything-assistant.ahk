@@ -126,7 +126,7 @@ CheckEverythingActive() {
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
-    AssistantGui.Show("w600 h600 NoActivate")
+    AssistantGui.Show("NoActivate")
   } else if (usingExplorer) { ; Windows Explorer context (may or may not be active now)
     explorerActive := WinActive("ahk_class CabinetWClass")
     if (explorerActive) {
@@ -178,14 +178,14 @@ CheckEverythingActive() {
       }
     }
 
-    AssistantGui.Show("w600 h600 NoActivate")
+    AssistantGui.Show(" NoActivate")
   } else {
     ; No recognized context window active (Everything/Explorer). If Assistant itself
     ; has focus we keep showing it with the last known selection. Otherwise we can
     ; choose to hide without clearing selection (preserving state for when Assistant
     ; is re-activated). Comment/uncomment behavior as desired.
     if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
-      AssistantGui.Show("w600 h600") ; Keep visible while focused
+      AssistantGui.Show("") ; Keep visible while focused
     } else {
       ; Optionally hide but keep selection data so it reappears intact
       ; AssistantGui.Hide()
