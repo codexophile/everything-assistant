@@ -84,7 +84,21 @@ SendToFileTagger(data) {
 }
 
 DeleteSelected() {
-  global EverythingWindowTitle, SelectedCount
+  global EverythingWindowTitle, SelectedCount, LastFileContext, SelectedFilePath, LastSelectedPath
+  ; Prefer Explorer when we have cached multi-line LastSelectedPath or a single SelectedFilePath that is not empty and Explorer window exists.
+  if (WinExist("ahk_class CabinetWClass") && (LastFileContext = "explorer" || (LastSelectedPath != "" && InStr(LastSelectedPath, "`n") || (SelectedFilePath != "" && !WinActive(EverythingWindowTitle))))) {
+    explorerHwnd := WinExist("ahk_class CabinetWClass")
+    WinActivate explorerHwnd
+    WinWaitActive "ahk_class CabinetWClass", , 1
+    if (SelectedCount <= 0 && LastSelectedPath = "") {
+      MsgBox "No items selected to delete."
+      return
+    }
+    Send "{Delete}"
+    return
+  }
+
+  ; Everything deletion (existing behavior)
   if !WinExist(EverythingWindowTitle) {
     MsgBox "Everything window not found."
     return
@@ -129,14 +143,30 @@ JoinWithNewlines(arr) {
 }
 
 GetSingleSelectedFilePath() {
+  global LastFileContext, SelectedFilePath, SelectedCount, LastSelectedPath, EverythingWindowTitle
+  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && SelectedFilePath != "" && !WinActive(EverythingWindowTitle))) {
+    if (SelectedCount = 1)
+      return SelectedFilePath
+    ; If multiple selected in Explorer, still return the primary path (first) for single-file actions
+    if (SelectedCount > 1) {
+      first := StrSplit(LastSelectedPath, "`n")[1]
+      return first
+    }
+    return ""
+  }
+  ; Everything context
   FileName := ListViewGetContent("Selected Col1", "SysListView321", EverythingWindowTitle)
   status := StatusBarGetText(, EverythingWindowTitle)
   fileSelected := RegExMatch(status, "   \|   Path: (.+)", &Path)
-  currPath := fileSelected ? Path[1] "\\" FileName : ""
+  currPath := (fileSelected && FileName != "") ? Path[1] "\\" FileName : ""
   return currPath
 }
 
 GetMultipleSelectedFilePaths() {
+  global LastFileContext, LastSelectedPath, EverythingWindowTitle
+  if (LastFileContext = "explorer" || (WinExist("ahk_class CabinetWClass") && LastSelectedPath != "" && !WinActive(EverythingWindowTitle))) {
+    return LastSelectedPath  ; newline-delimited list already cached
+  }
   WinActivate(EverythingWindowTitle)
   A_Clipboard := ""
   Send "^+c"

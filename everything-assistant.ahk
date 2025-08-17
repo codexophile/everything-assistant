@@ -103,6 +103,7 @@ CheckEverythingActive() {
 
         LastSelectedPath := currPath
         LastSelectedName := currName
+  LastFileContext := "everything" ; reinforce context when updating
 
         ; Update chapter metadata (Everything context) - helper will handle conditions
         UpdateChaptersMetadata(false)
@@ -142,7 +143,15 @@ CheckEverythingActive() {
           SplitPath(currPath, &currName)
           names := currName
         } else if (currCount > 1) {
+          ; When multiple files are selected in Explorer, previously we left
+          ; SelectedFilePath blank causing downstream actions (expecting a
+          ; primary file) to think nothing was selected. Use the first item
+          ; as the primary selection while still exposing all names via
+          ; SelectedNames.
           pathsList := StrSplit(selectedPaths, "`n")
+          primaryPath := pathsList[1]
+          currPath := primaryPath
+          SplitPath(primaryPath, &currName)
           namesList := []
           for path in pathsList {
             SplitPath(path, &name)
@@ -160,6 +169,7 @@ CheckEverythingActive() {
 
         LastSelectedPath := selectedPaths
         LastSelectedName := "" ; Reset this to ensure change detection works across apps
+  LastFileContext := "explorer" ; reinforce context when updating
 
         ; Update chapter metadata (Explorer context)
         UpdateChaptersMetadata(true)
