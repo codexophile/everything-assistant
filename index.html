@@ -169,6 +169,9 @@
   <div class="container py-4">
     <div class="d-flex align-items-center mb-3">
       <h1 class="h4 m-0 fw-bold text-primary flex-grow-1">Everything Assistant</h1>
+      <button id="btn-open-config" class="icon-btn btn btn-outline-secondary ms-2" title="Open configuration">
+        <i class="fa-solid fa-gear"></i>
+      </button>
     </div>
 
     <div class="content-card">
@@ -208,6 +211,7 @@
       <div id="chapters-list" class="mono"
         style="font-size:11px; max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:8px;"></div>
     </div>
+
   </div>
 
   <!-- Floating reload button -->
@@ -216,6 +220,13 @@
   </button>
 
   <script type="module" src="./app.js"></script>
+  <script>
+    // Lightweight navigation handler for config button
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btn-open-config');
+      if (btn) btn.addEventListener('click', () => (window.location.href = 'config.html'));
+    });
+  </script>
 </body>
 <style>
   /* Floating reload button styles */
