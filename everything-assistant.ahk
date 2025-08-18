@@ -188,7 +188,7 @@ CheckEverythingActive() {
       AssistantGui.Show("") ; Keep visible while focused
     } else {
       ; Optionally hide but keep selection data so it reappears intact
-      ; AssistantGui.Hide()
+      AssistantGui.Hide()
     }
   }
 }
