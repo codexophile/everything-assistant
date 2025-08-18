@@ -20,13 +20,13 @@ export async function renderFolderButtons(items) {
   if (!items?.length) {
     els.actions.innerHTML =
       '<div class="alert alert-info">No folder actions available</div>';
-    els.secondary.innerHTML = '';
+    // NOTE: Do not clear els.secondary here; it now hosts global query buttons (Exclude Folders / Clean Query)
     return;
   }
 
   const fileName = await ahk.global.SelectedFileName;
   els.actions.innerHTML = '';
-  els.secondary.innerHTML = '';
+  // Do NOT wipe els.secondary anymore; it's reserved for global secondary toolbar buttons.
 
   // Create a container for folders
   const list = document.createElement('div');
