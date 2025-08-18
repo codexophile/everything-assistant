@@ -6,6 +6,7 @@
 #Include ./src/ahk/QueryActions.ahk
 #Include ./src/ahk/Chapters.ahk
 #Include ./src/ahk/FileActions.ahk
+#Include ./src/ahk/ConfigManager.ahk
 
 ; Constants
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
