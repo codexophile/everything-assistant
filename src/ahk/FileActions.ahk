@@ -75,8 +75,9 @@ SendToFileTagger(data) {
     } else {
       s := data
     }
-    Run FileTaggerPath ElectronSubPath " " FileTaggerPath " --files-list " '"' s '"',
-      FileTaggerPath
+    ; Run FileTaggerPath ElectronSubPath " " FileTaggerPath " --files-list " '"' s '"',
+    ;   FileTaggerPath
+    Run("tagger-launcher.ahk" ' "' s '"')
   } catch as e {
     try MsgBox "(error) " . e.Message
   }
