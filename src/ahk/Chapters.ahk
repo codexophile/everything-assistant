@@ -1,15 +1,6 @@
 ; Chapters.ahk - video chapter & ffmetadata utilities
 #Requires AutoHotkey v2.0
 
-IsVideoFile(ext) {
-  extLower := StrLower(ext)
-  for , v in ["mp4", "mkv", "mov", "avi", "webm", "m4v"] {
-    if (extLower = v)
-      return true
-  }
-  return false
-}
-
 FileToBase64(filePath) {
   try {
     if (!filePath || !FileExist(filePath))
