@@ -120,28 +120,10 @@ CheckEverythingActive() {
         LastFileContext := "everything" ; reinforce context when updating
 
         ; Update chapter metadata (Everything context) - helper will handle conditions
-        ; Reset / set video duration and kick off async fetch if video file
-        SelectedFileDuration := ""
-        if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
-          SplitPath(SelectedFileName, , , &ext)
-          ext := StrLower(ext)
-          ; Common video extensions
-          IsAVideo := IsVideoFile(ext)
-          if IsAVideo {
-            fullPath := SelectedFilePath "\\" SelectedFileName
-            ; Try cache first
-            cached := GetCachedVideoDuration(fullPath)
-            if (cached != "") {
-              SelectedFileDuration := cached
-            } else {
-              SelectedFileDuration := "__PENDING__" ; sentinel for spinner
-              selKey := SelectedFilePath "|" SelectedFileName
-              SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
-            }
-          }
-        }
-
         UpdateChaptersMetadata(false)
+        ; Queue / cache video duration if applicable
+        if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "")
+          MaybeQueueVideoDuration(SelectedFilePath "\\" SelectedFileName)
 
         ; Notify webview to update its UI from ahk.global variables
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
@@ -206,24 +188,9 @@ CheckEverythingActive() {
         LastSelectedName := "" ; Reset this to ensure change detection works across apps
         LastFileContext := "explorer" ; reinforce context when updating
 
-        ; Video duration handling (Explorer context) analogous to Everything branch
-        SelectedFileDuration := ""
-        if (SelectedCount = 1 && SelectedFilePath != "") {
-          ; In Explorer, SelectedFilePath is the full path
-          fullPath := SelectedFilePath
-          SplitPath(fullPath, , , &ext)
-          ext := StrLower(ext)
-          if IsVideoFile(ext) {
-            cached := GetCachedVideoDuration(fullPath)
-            if (cached != "") {
-              SelectedFileDuration := cached
-            } else {
-              SelectedFileDuration := "__PENDING__"
-              selKey := SelectedFilePath "|" SelectedFileName
-              SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
-            }
-          }
-        }
+        ; Video duration handling (Explorer context)
+        if (SelectedCount = 1 && SelectedFilePath != "")
+          MaybeQueueVideoDuration(SelectedFilePath)
 
         ; Update chapter metadata (Explorer context)
         UpdateChaptersMetadata(true)
@@ -268,6 +235,28 @@ FetchAndSetVideoDuration(fullPath, selKey) {
     SetVideoDurationCache(fullPath, dur)
     AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
   }
+}
+
+MaybeQueueVideoDuration(fullPath) {
+  global SelectedFileDuration, SelectedFilePath, SelectedFileName
+  if !FileExist(fullPath) {
+    SelectedFileDuration := ""
+    return
+  }
+  SplitPath(fullPath, , , &ext)
+  ext := StrLower(ext)
+  if !IsVideoFile(ext) {
+    SelectedFileDuration := ""
+    return
+  }
+  cached := GetCachedVideoDuration(fullPath)
+  if (cached != "") {
+    SelectedFileDuration := cached
+    return
+  }
+  SelectedFileDuration := "__PENDING__"
+  selKey := SelectedFilePath "|" SelectedFileName
+  SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
 }
 
 GetCachedVideoDuration(fullPath) {

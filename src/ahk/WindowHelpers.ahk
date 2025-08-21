@@ -32,13 +32,14 @@ AppendToken(curr, token) {
 
 ResetSelection() {
   global SelectedFilePath, SelectedFileName, SelectedNames, SelectedCount, SelectedFolderPaths
-  global LastSelectedPath, LastSelectedName, SelectedChaptersJson, AssistantGui
+  global LastSelectedPath, LastSelectedName, SelectedChaptersJson, AssistantGui, SelectedFileDuration
   SelectedFilePath := ""
   SelectedFileName := ""
   SelectedNames := ""
   SelectedCount := 0
   SelectedFolderPaths := ""
   SelectedChaptersJson := ""
+  SelectedFileDuration := ""
   LastSelectedPath := ""
   LastSelectedName := ""
   AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
