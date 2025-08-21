@@ -206,6 +206,25 @@ CheckEverythingActive() {
         LastSelectedName := "" ; Reset this to ensure change detection works across apps
         LastFileContext := "explorer" ; reinforce context when updating
 
+        ; Video duration handling (Explorer context) analogous to Everything branch
+        SelectedFileDuration := ""
+        if (SelectedCount = 1 && SelectedFilePath != "") {
+          ; In Explorer, SelectedFilePath is the full path
+          fullPath := SelectedFilePath
+          SplitPath(fullPath, , , &ext)
+          ext := StrLower(ext)
+          if IsVideoFile(ext) {
+            cached := GetCachedVideoDuration(fullPath)
+            if (cached != "") {
+              SelectedFileDuration := cached
+            } else {
+              SelectedFileDuration := "__PENDING__"
+              selKey := SelectedFilePath "|" SelectedFileName
+              SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
+            }
+          }
+        }
+
         ; Update chapter metadata (Explorer context)
         UpdateChaptersMetadata(true)
         AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
