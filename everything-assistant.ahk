@@ -1,6 +1,8 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
+; Include necessary libraries
 #Include ..\#lib\WebViewToo\WebViewToo.ahk
+#Include ..\#lib\Functions.ahk
 ; Local modules
 #Include ./src/ahk/WindowHelpers.ahk
 #Include ./src/ahk/QueryActions.ahk
@@ -211,6 +213,6 @@ F11:: {
   global SelectedFilePath, selectedFileName
   fullPath := SelectedFilePath . '\' . selectedFileName
   duration := GetVideoDuration(fullPath)
-  MsgBox("Duration: " . duration . " seconds")
+  MsgBox duration
 }
 #HotIf

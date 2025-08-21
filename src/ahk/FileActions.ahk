@@ -101,39 +101,61 @@ DeleteSelected() {
   }
 }
 
-GetVideoDuration(filePath, roundSeconds := false) {
-  ; Silently obtain video duration using ffprobe with no visible window or popups.
-  ; Returns "" on any failure. Optionally rounds to whole seconds.
+GetVideoDuration(filePath, format := "hms", roundSeconds := false) {
+  ; Silently obtain video duration using ffprobe with no visible window.
+  ; format:
+  ;   "raw"    -> original ffprobe float seconds string (default)
+  ;   "seconds"-> numeric seconds (optionally rounded)
+  ;   "hms"    -> HH:MM:SS (rounded to nearest second unless roundSeconds=false, in which case truncates)
+  ; Returns "" on failure.
   global FfprobePath
-  try {
-    tempFile := A_Temp "\\ffdur_" A_TickCount ".txt"
-
-    ; Build ffprobe command (duration in seconds as float)
-    ffCmd := '"' FfprobePath '" -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
-    ; Redirect stdout to temp file, suppress stderr
-    cmdLine := 'cmd.exe /c "' ffCmd ' > "' tempFile '" 2>nul"'
-
-    RunWait cmdLine, , "Hide"  ; Hide ensures no console flashes
-
-    if !FileExist(tempFile)
-      return ""
-
-    dur := Trim(FileRead(tempFile))
-    FileDelete(tempFile)
-
-    if (dur = "")
-      return ""
-
-    ; Validate numeric
-    if RegExMatch(dur, '^[0-9]+(\.[0-9]+)?$') {
-      if (roundSeconds)
-        return Round(dur)
-      return dur
-    }
+  if (!filePath || !FileExist(filePath))
     return ""
-  } catch {
-    return ""  ; Always silent
+  FoundFfprobe := ProgramExistsFromPath(FfprobePath)
+  if (!IsSet(FfprobePath) || FfprobePath = "" || !ProgramExistsFromPath(FfprobePath))
+    return ""
+
+  tempFile := A_Temp "\\ffdur_" A_TickCount ".txt"
+  ffCmd := '"' FfprobePath '" -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
+  cmdLine := 'cmd.exe /c "' ffCmd ' > "' tempFile '" 2>nul"'
+  RunWait cmdLine, , "Hide"
+  if !FileExist(tempFile)
+    return ""
+  dur := Trim(FileRead(tempFile))
+  FileDelete(tempFile)
+  if (dur = "")
+    return ""
+  ; Fast numeric validation using built-in type check; falls back to regex if needed.
+  if (dur is not number) {
+    if !RegExMatch(dur, '^[0-9]+(\.[0-9]+)?$')
+      return ""
   }
+  ; Coerce string -> float by simple addition (avoids Float()/Integer() strictness)
+  secFloat := dur + 0.0
+
+  if (format = "raw") {
+    if (roundSeconds)
+      return Round(secFloat)
+    return dur
+  }
+
+  ; Seconds numeric
+  if (format = "seconds") {
+    return roundSeconds ? Round(secFloat) : secFloat
+  }
+
+  if (format = "hms") {
+    ; Choose integer seconds (rounded vs truncated)
+    total := roundSeconds ? Round(secFloat) : Floor(secFloat)
+    hrs := Floor(total / 3600)
+    mins := Floor(Mod(total, 3600) / 60)
+    secs := Mod(total, 60)
+    Result := Format("{:02}:{:02}:{:02}", hrs, mins, secs)
+    return Result
+  }
+
+  ; Unknown format -> fallback raw
+  return dur
 }
 
 Explorer_GetSelected() {
