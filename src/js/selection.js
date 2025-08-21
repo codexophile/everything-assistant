@@ -58,8 +58,14 @@ export async function renderSelection() {
       els.path.innerText = filePath && filePath.trim() ? filePath : '(no path)';
 
       if (duration && duration.trim()) {
-        els.duration.style.display = '';
-        els.duration.innerHTML = `<i class="fa-regular fa-clock me-1"></i> ${duration}`;
+        if (duration === '__PENDING__') {
+          els.duration.style.display = '';
+          els.duration.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin me-1"></i> Getting duration...';
+        } else {
+          els.duration.style.display = '';
+          els.duration.innerHTML = `<i class="fa-regular fa-clock me-1"></i> ${duration}`;
+        }
       } else {
         els.duration.style.display = 'none';
         els.duration.innerText = '';

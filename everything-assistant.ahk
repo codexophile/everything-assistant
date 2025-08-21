@@ -119,6 +119,21 @@ CheckEverythingActive() {
         LastFileContext := "everything" ; reinforce context when updating
 
         ; Update chapter metadata (Everything context) - helper will handle conditions
+        ; Reset / set video duration and kick off async fetch if video file
+        SelectedFileDuration := ""
+        if (SelectedCount = 1 && SelectedFilePath != "" && SelectedFileName != "") {
+          SplitPath(SelectedFileName, , , &ext)
+          ext := StrLower(ext)
+          ; Common video extensions
+          IsAVideo := IsVideoFile(ext)
+          if IsAVideo {
+            SelectedFileDuration := "__PENDING__" ; sentinel for spinner
+            fullPath := SelectedFilePath "\\" SelectedFileName
+            selKey := SelectedFilePath "|" SelectedFileName
+            SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
+          }
+        }
+
         UpdateChaptersMetadata(false)
 
         ; Notify webview to update its UI from ahk.global variables
@@ -202,5 +217,28 @@ CheckEverythingActive() {
       ; Optionally hide but keep selection data so it reappears intact
       AssistantGui.Hide()
     }
+  }
+}
+
+; Async helper to compute video duration without blocking UI loop.
+FetchAndSetVideoDuration(fullPath, selKey) {
+  global SelectedFilePath, SelectedFileName, SelectedFileDuration, AssistantGui
+  ; Ensure selection still matches initial key (avoid race if user changed selection)
+  currKey := SelectedFilePath "|" SelectedFileName
+  if (currKey != selKey) {
+    return
+  }
+  dur := GetVideoDuration(fullPath, "hms", true)
+  if (dur = "") {
+    ; Leave empty (will hide UI). Only update if still same selection.
+    if (currKey = selKey) {
+      SelectedFileDuration := ""
+      AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
+    }
+    return
+  }
+  if (currKey = selKey) {
+    SelectedFileDuration := dur
+    AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
   }
 }
