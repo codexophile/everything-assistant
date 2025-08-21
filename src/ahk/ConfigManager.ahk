@@ -151,3 +151,79 @@ HasValue(haystack, needle) {
       return true
   return false
 }
+
+; Read and return the entire config.ini as an object of the form:
+; {
+;   SectionName: { Key: Value, ... },
+;   ...
+; }
+; Primitive value coercion rules:
+;   - "true"/"false" (case-insensitive) -> boolean true/false
+;   - Numeric (integer or float) -> number
+;   - Otherwise -> raw (trimmed) string
+; If the ini file does not exist or can't be read, returns an empty object.
+ReadFullConfig() {
+  iniPath := A_ScriptDir "\config.ini"
+  config := Map() ; Use Map for dynamic keyed access
+  if !FileExist(iniPath)
+    return config
+
+  ; Read file content
+  content := ""
+  try content := FileRead(iniPath, "UTF-8")
+  catch {
+    return config
+  }
+
+  currentSection := "General" ; Assume implicit General if keys appear before any section header
+  config[currentSection] := Map()
+
+  for line in StrSplit(content, "`n", "`r") {
+    if (line = "")
+      continue
+    ; Trim whitespace
+    line := Trim(line)
+    if (line = "")
+      continue
+    ; Skip comments starting with ; or #
+    if (SubStr(line, 1, 1) = ";" || SubStr(line, 1, 1) = "#")
+      continue
+    ; Section header
+    if (RegExMatch(line, "^\[(.+)\]$", &m)) {
+      currentSection := m[1]
+      if !config.Has(currentSection)
+        config[currentSection] := Map()
+      continue
+    }
+    ; Key=Value line
+    eqPos := InStr(line, "=")
+    if (eqPos) {
+      key := Trim(SubStr(line, 1, eqPos - 1))
+      value := Trim(SubStr(line, eqPos + 1))
+      if (key = "")
+        continue
+      ; Coerce value type
+      low := StrLower(value)
+      if (low = "true") {
+        coerced := true
+      } else if (low = "false") {
+        coerced := false
+      } else if RegExMatch(value, "^[+-]?\d+$") { ; integer
+        coerced := Integer(value)
+      } else if RegExMatch(value, "^[+-]?\d+\.\d+([eE][+-]?\d+)?$") { ; float
+        try {
+          coerced := value + 0.0
+        } catch {
+          coerced := value
+        }
+      } else {
+        coerced := value
+      }
+      ; Ensure section map exists (defensive)
+      if !config.Has(currentSection)
+        config[currentSection] := Map()
+      config[currentSection][key] := coerced
+    }
+  }
+  return config
+}
