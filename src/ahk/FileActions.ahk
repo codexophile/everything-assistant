@@ -101,9 +101,9 @@ DeleteSelected() {
   }
 }
 
-GetVideoDuration(filePath, format := "hms", roundSeconds := false) {
+GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
   ; Silently obtain video duration using ffprobe with no visible window.
-  ; format:
+  ; fmt (previously named 'format' but renamed to avoid shadowing built-in Format()):
   ;   "raw"    -> original ffprobe float seconds string (default)
   ;   "seconds"-> numeric seconds (optionally rounded)
   ;   "hms"    -> HH:MM:SS (rounded to nearest second unless roundSeconds=false, in which case truncates)
@@ -125,26 +125,25 @@ GetVideoDuration(filePath, format := "hms", roundSeconds := false) {
   FileDelete(tempFile)
   if (dur = "")
     return ""
-  ; Fast numeric validation using built-in type check; falls back to regex if needed.
-  if (dur is not number) {
-    if !RegExMatch(dur, '^[0-9]+(\.[0-9]+)?$')
-      return ""
-  }
-  ; Coerce string -> float by simple addition (avoids Float()/Integer() strictness)
-  secFloat := dur + 0.0
 
-  if (format = "raw") {
+  ; Coerce string -> float by simple addition (avoids Float()/Integer() strictness)
+  durTrimmed := Trim(dur)
+  durTrimmed := StrReplace(durTrimmed, '`n', '')
+  durTrimmed := StrReplace(durTrimmed, '`r', '')
+  secFloat := durTrimmed + 0.0
+
+  if (fmt = "raw") {
     if (roundSeconds)
       return Round(secFloat)
     return dur
   }
 
   ; Seconds numeric
-  if (format = "seconds") {
+  if (fmt = "seconds") {
     return roundSeconds ? Round(secFloat) : secFloat
   }
 
-  if (format = "hms") {
+  if (fmt = "hms") {
     ; Choose integer seconds (rounded vs truncated)
     total := roundSeconds ? Round(secFloat) : Floor(secFloat)
     hrs := Floor(total / 3600)
