@@ -41,7 +41,12 @@ SelectedFileDuration := ""  ; Duration in seconds or formatted string
 AssistantGui := WebViewGui("Resize")
 AssistantGui.Title := AssistantWindowTitle
 AssistantGui.Navigate "index.html"
-AssistantGui.Debug()
+
+Config := ReadFullConfig()
+OpenDevTools := Config['General']['OpenDevToolsAtStartup']
+if (OpenDevTools == "1") {
+  AssistantGui.Debug()
+}
 
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
