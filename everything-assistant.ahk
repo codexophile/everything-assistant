@@ -8,6 +8,9 @@
 #Include ./src/ahk/FileActions.ahk
 #Include ./src/ahk/ConfigManager.ahk
 
+; Ensure working directory is script folder so relative paths (config.ini) resolve
+SetWorkingDir(A_ScriptDir)
+
 ; Constants
 EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
 AssistantWindowTitle := "Everything Assistant"

@@ -28,49 +28,18 @@ async function updateConfigValue(key, value) {
   }
 }
 
-// Map config labels to either ahk.global.* variables or functions
+// Configuration items now reduced to a single option.
+// Boolean option rendered as a checkbox (Bootstrap switch style).
 const CONFIG_ITEMS = [
   {
-    key: 'EverythingWindowTitle',
-    label: 'Everything Window',
-    src: () => readValue('ahk.global.EverythingWindowTitle'),
+    key: 'OpenDevToolsAtStartup',
+    label: 'Open dev tools at startup',
+    // Prefer dedicated getter function (more reliable across bridges), fallback to raw var
+    src: () =>
+      readValue('ahk.global.GetOpenDevToolsAtStartup') ??
+      readValue('ahk.global.OpenDevToolsAtStartup'),
     editable: true,
-    type: 'text',
-  },
-  {
-    key: 'AssistantWindowTitle',
-    label: 'Assistant Window',
-    src: () => readValue('ahk.global.AssistantWindowTitle'),
-    editable: true,
-    type: 'text',
-  },
-  {
-    key: 'MainWidth',
-    label: 'Main Width',
-    src: () => readValue('ahk.global.MainWidth'),
-    editable: true,
-    type: 'number',
-  },
-  {
-    key: 'FileTaggerPath',
-    label: 'File Tagger Path',
-    src: () => readValue('ahk.global.FileTaggerPath'),
-    editable: true,
-    type: 'file',
-  },
-  {
-    key: 'ElectronSubPath',
-    label: 'Electron SubPath',
-    src: () => readValue('ahk.global.ElectronSubPath'),
-    editable: true,
-    type: 'text',
-  },
-  {
-    key: 'AvidemuxPath',
-    label: 'Avidemux Path',
-    src: () => readValue('ahk.global.AvidemuxPath'),
-    editable: true,
-    type: 'file',
+    type: 'boolean',
   },
 ];
 
@@ -107,42 +76,37 @@ export function renderConfigInto(container) {
 
     row.appendChild(labelRow);
 
-    // Create input element for editable fields
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group input-group-sm mt-1';
+    let input; // reference used later
 
-    const input = document.createElement('input');
-    input.type = item.type || 'text';
-    input.className = 'form-control form-control-sm mono';
-    input.placeholder = `Enter ${item.label}...`;
-    input.dataset.originalValue = '';
-    input.disabled = !item.editable;
-
-    if (item.type === 'file') {
-      const browseBtn = document.createElement('button');
-      browseBtn.className = 'btn btn-outline-secondary';
-      browseBtn.type = 'button';
-      browseBtn.innerHTML = '<i class="fa-solid fa-folder-open"></i>';
-      browseBtn.title = `Browse for ${item.label}`;
-      browseBtn.onclick = async () => {
-        try {
-          // This assumes we have a method in AHK to open a file dialog
-          if (window.ahk?.global?.BrowseForFile) {
-            const path = await window.ahk.global.BrowseForFile();
-            if (path) {
-              input.value = path;
-              input.dispatchEvent(new Event('change'));
-            }
-          }
-        } catch (e) {
-          console.error('Browse failed:', e);
-        }
-      };
-      inputGroup.appendChild(browseBtn);
+    if (item.type === 'boolean') {
+      // Use a form-switch for boolean
+      const formCheck = document.createElement('div');
+      formCheck.className = 'form-check form-switch mt-1';
+      input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'form-check-input';
+      input.id = `cfg-${item.key}`;
+      input.disabled = !item.editable;
+      const switchLabel = document.createElement('label');
+      switchLabel.className = 'form-check-label small';
+      switchLabel.setAttribute('for', input.id);
+      switchLabel.textContent = 'Enabled';
+      formCheck.appendChild(input);
+      formCheck.appendChild(switchLabel);
+      row.appendChild(formCheck);
+    } else {
+      // Fallback (not currently used) - keeps previous behavior
+      const inputGroup = document.createElement('div');
+      inputGroup.className = 'input-group input-group-sm mt-1';
+      input = document.createElement('input');
+      input.type = item.type || 'text';
+      input.className = 'form-control form-control-sm mono';
+      input.placeholder = `Enter ${item.label}...`;
+      input.dataset.originalValue = '';
+      input.disabled = !item.editable;
+      inputGroup.appendChild(input);
+      row.appendChild(inputGroup);
     }
-
-    inputGroup.appendChild(input);
-    row.appendChild(inputGroup);
 
     // Status indicator for changes
     const statusRow = document.createElement('div');
@@ -156,17 +120,17 @@ export function renderConfigInto(container) {
 
     // Track changes
     input.addEventListener('change', () => {
-      if (input.value !== input.dataset.originalValue) {
+      const currentValue =
+        item.type === 'boolean' ? String(input.checked) : input.value;
+      if (currentValue !== input.dataset.originalValue) {
         status.textContent = 'Changed - needs saving';
         status.className = 'text-warning';
         status.style.display = 'block';
-        window._configEdits[item.key] = input.value;
+        window._configEdits[item.key] = currentValue;
       } else {
         status.style.display = 'none';
         delete window._configEdits[item.key];
       }
-
-      // Update save button state
       updateSaveButtonState();
     });
 
@@ -174,16 +138,48 @@ export function renderConfigInto(container) {
 
     function assign(finalVal) {
       value = finalVal;
-      const text = value == null || value === '' ? '' : String(value);
-      input.value = text;
-      input.dataset.originalValue = text;
-      input.title = text;
+      if (item.type === 'boolean') {
+        const boolVal = !!(
+          value === true ||
+          value === 'true' ||
+          value === 1 ||
+          value === '1'
+        );
+        input.checked = boolVal;
+        input.dataset.originalValue = String(boolVal);
+        input.title = boolVal ? 'Enabled' : 'Disabled';
+      } else {
+        const text = value == null || value === '' ? '' : String(value);
+        input.value = text;
+        input.dataset.originalValue = text;
+        input.title = text;
+      }
     }
 
     if (raw && typeof raw.then === 'function') {
       raw.then(r => assign(r)).catch(() => assign(undefined));
     } else {
       assign(raw);
+    }
+
+    // If the value was undefined (likely because the AHK bridge hadn't yet populated
+    // globals when this script ran), schedule a single retry shortly after. This helps
+    // the UI reflect values loaded very early on the AHK side (e.g., from config.ini)
+    // without requiring a manual refresh.
+    if (raw === undefined) {
+      setTimeout(() => {
+        try {
+          const later = item.src();
+          if (later === undefined) return; // still nothing
+          if (later && typeof later.then === 'function') {
+            later.then(v => assign(v)).catch(() => {});
+          } else {
+            assign(later);
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 300);
     }
   });
 }
@@ -222,29 +218,19 @@ async function saveConfig() {
   saveBtn.disabled = true;
 
   try {
-    // Check if we have a bulk update method or need to call individually
-    if (window.ahk?.global?.UpdateConfigBulk) {
-      const result = await window.ahk.global.UpdateConfigBulk(
-        JSON.stringify(changes)
-      );
-      showToast(
-        result ? 'Configuration saved!' : 'Failed to save configuration'
-      );
-    } else {
-      // Fall back to individual updates
-      let allSuccess = true;
-      for (const key of keys) {
-        const value = changes[key];
-        const success = await updateConfigValue(key, value);
-        if (!success) {
-          allSuccess = false;
-          console.error(`Failed to update ${key}`);
-        }
+    // Always perform per-key updates (bulk path caused COM enumeration issues)
+    let allSuccess = true;
+    for (const key of keys) {
+      const value = changes[key];
+      const success = await updateConfigValue(key, value);
+      if (!success) {
+        allSuccess = false;
+        console.error(`Failed to update ${key}`);
       }
-      showToast(
-        allSuccess ? 'Configuration saved!' : 'Some settings failed to save'
-      );
     }
+    showToast(
+      allSuccess ? 'Configuration saved!' : 'Some settings failed to save'
+    );
 
     // Clear changes and refresh
     window._configEdits = {};
@@ -308,6 +294,55 @@ export function initStandaloneConfigPage() {
   const list = document.querySelector('#config-list');
   const btnRefresh = document.querySelector('#btn-refresh-config');
   const btnSave = document.querySelector('#btn-save-config');
+  // Inject a small diagnostics footer
+  let diag = document.getElementById('config-diagnostics');
+  if (!diag) {
+    diag = document.createElement('div');
+    diag.id = 'config-diagnostics';
+    diag.className = 'mt-3 small text-muted';
+    diag.innerHTML =
+      '<div><strong>Diagnostics:</strong> <span id="cfg-diag-open"></span></div>' +
+      '<div class="mt-1">(If blank/?? then window.ahk.global not ready when rendered)</div>';
+    list?.parentElement?.appendChild(diag);
+  }
+
+  function updateDiagnostics() {
+    const span = document.getElementById('cfg-diag-open');
+    if (!span) return;
+    let val = undefined;
+    try {
+      let getter = readValue('ahk.global.GetOpenDevToolsAtStartup');
+      if (typeof getter === 'function') {
+        try {
+          val = getter();
+        } catch (e) {
+          // some bridges require async call pattern
+          val = undefined;
+        }
+      }
+      if (val === undefined) {
+        val = readValue('ahk.global.OpenDevToolsAtStartup');
+      }
+      if (val && typeof val.then === 'function') {
+        // async promise
+        val
+          .then(r => {
+            span.textContent = 'OpenDevToolsAtStartup=' + JSON.stringify(r);
+          })
+          .catch(() => {
+            span.textContent = 'OpenDevToolsAtStartup=?';
+          });
+        return;
+      }
+    } catch {
+      val = undefined;
+    }
+    let display;
+    if (val === undefined) display = '??';
+    else if (val === true || val === false) display = val ? 'true' : 'false';
+    else display = JSON.stringify(val);
+    span.textContent = 'OpenDevToolsAtStartup=' + display;
+  }
 
   // Initialize refresh button
   btnRefresh?.addEventListener('click', () => renderConfigInto(list));
@@ -317,6 +352,7 @@ export function initStandaloneConfigPage() {
 
   // Initial render
   renderConfigInto(list);
+  updateDiagnostics();
 
   // Initial button state
   window._configEdits = {};
@@ -324,4 +360,11 @@ export function initStandaloneConfigPage() {
 
   // Expose for AHK
   window.refreshConfigFromAhk = () => renderConfigInto(list);
+  // Periodic diag update for first second
+  let attempts = 0;
+  const iv = setInterval(() => {
+    attempts++;
+    updateDiagnostics();
+    if (attempts > 8) clearInterval(iv);
+  }, 150);
 }
