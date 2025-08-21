@@ -97,9 +97,33 @@ DeleteSelected() {
       catch as error {
         MsgBox "Failed to recycle: " . A_LoopField . "`nError: " . error.Message
       }
-
     }
   }
+}
+
+GetVideoDuration(filePath) {
+  global FfprobePath
+  ; if (!FileExist(FfprobePath)) {
+  ;   MsgBox("ffprobe.exe not found at: " . FfprobePath)
+  ;   return ""
+  ; }
+
+  ; -v error: show only errors
+  ; -show_entries format=duration: get only the duration value
+  ; -of default=...: print the value raw, without the "duration=" key
+  cmd := '"' FfprobePath '" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
+
+  ; Run the command hidden and capture its stdout
+  shell := ComObject("WScript.Shell")
+  exec := shell.Exec(cmd)
+
+  ; Wait for the process to finish and read the output
+  output := ""
+  while !exec.StdOut.AtEndOfStream
+    output .= exec.StdOut.ReadAll()
+
+  ; Trim whitespace and return the duration (in seconds)
+  return Trim(output)
 }
 
 Explorer_GetSelected() {

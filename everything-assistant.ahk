@@ -18,6 +18,7 @@ MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
 ElectronSubPath := "node_modules\electron\dist\electron.exe"
 AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
+FfprobePath := "ffprobe"  ; Path to ffprobe.exe
 ; Tracks which file browser (Everything / Explorer) was last active so that
 ; when the Assistant window itself is focused we still reflect the correct context
 LastFileContext := "everything"  ; default
@@ -201,3 +202,15 @@ CheckEverythingActive() {
     }
   }
 }
+
+A_TrayMenu.Add("Exit", (*) => ExitApp())
+
+; --- Temporary test hotkey ---
+#HotIf WinActive(EverythingWindowTitle)
+F11:: {
+  global SelectedFilePath, selectedFileName
+  fullPath := SelectedFilePath . '\' . selectedFileName
+  duration := GetVideoDuration(fullPath)
+  MsgBox("Duration: " . duration . " seconds")
+}
+#HotIf
