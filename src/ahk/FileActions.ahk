@@ -126,7 +126,6 @@ GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
   if (dur = "")
     return ""
 
-  ; Coerce string -> float by simple addition (avoids Float()/Integer() strictness)
   durTrimmed := Trim(dur)
   durTrimmed := StrReplace(durTrimmed, '`n', '')
   durTrimmed := StrReplace(durTrimmed, '`r', '')

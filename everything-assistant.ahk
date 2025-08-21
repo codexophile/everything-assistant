@@ -206,13 +206,3 @@ CheckEverythingActive() {
 }
 
 A_TrayMenu.Add("Exit", (*) => ExitApp())
-
-; --- Temporary test hotkey ---
-#HotIf WinActive(EverythingWindowTitle)
-F11:: {
-  global SelectedFilePath, selectedFileName
-  fullPath := SelectedFilePath . '\' . selectedFileName
-  duration := GetVideoDuration(fullPath)
-  MsgBox duration
-}
-#HotIf
