@@ -127,8 +127,7 @@ GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
     return ""
 
   durTrimmed := Trim(dur)
-  durTrimmed := StrReplace(durTrimmed, '`n', '')
-  durTrimmed := StrReplace(durTrimmed, '`r', '')
+  durTrimmed := RegExReplace(durTrimmed, "[\r\n]")
   secFloat := durTrimmed + 0.0
 
   if (fmt = "raw") {
