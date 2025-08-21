@@ -204,5 +204,3 @@ CheckEverythingActive() {
     }
   }
 }
-
-A_TrayMenu.Add("Exit", (*) => ExitApp())
