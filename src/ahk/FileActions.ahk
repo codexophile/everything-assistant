@@ -101,29 +101,39 @@ DeleteSelected() {
   }
 }
 
-GetVideoDuration(filePath) {
+GetVideoDuration(filePath, roundSeconds := false) {
+  ; Silently obtain video duration using ffprobe with no visible window or popups.
+  ; Returns "" on any failure. Optionally rounds to whole seconds.
   global FfprobePath
-  ; if (!FileExist(FfprobePath)) {
-  ;   MsgBox("ffprobe.exe not found at: " . FfprobePath)
-  ;   return ""
-  ; }
+  try {
+    tempFile := A_Temp "\\ffdur_" A_TickCount ".txt"
 
-  ; -v error: show only errors
-  ; -show_entries format=duration: get only the duration value
-  ; -of default=...: print the value raw, without the "duration=" key
-  cmd := '"' FfprobePath '" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
+    ; Build ffprobe command (duration in seconds as float)
+    ffCmd := '"' FfprobePath '" -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
+    ; Redirect stdout to temp file, suppress stderr
+    cmdLine := 'cmd.exe /c "' ffCmd ' > "' tempFile '" 2>nul"'
 
-  ; Run the command hidden and capture its stdout
-  shell := ComObject("WScript.Shell")
-  exec := shell.Exec(cmd)
+    RunWait cmdLine, , "Hide"  ; Hide ensures no console flashes
 
-  ; Wait for the process to finish and read the output
-  output := ""
-  while !exec.StdOut.AtEndOfStream
-    output .= exec.StdOut.ReadAll()
+    if !FileExist(tempFile)
+      return ""
 
-  ; Trim whitespace and return the duration (in seconds)
-  return Trim(output)
+    dur := Trim(FileRead(tempFile))
+    FileDelete(tempFile)
+
+    if (dur = "")
+      return ""
+
+    ; Validate numeric
+    if RegExMatch(dur, '^[0-9]+(\.[0-9]+)?$') {
+      if (roundSeconds)
+        return Round(dur)
+      return dur
+    }
+    return ""
+  } catch {
+    return ""  ; Always silent
+  }
 }
 
 Explorer_GetSelected() {
