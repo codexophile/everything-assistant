@@ -39,6 +39,7 @@ SelectedCount := 0
 SelectedFolderPaths := ""   ; folder chain (parent -> root) for current single selection
 SelectedChaptersJson := ""  ; JSON array of chapter objects parsed from .ffmetadata (if any)
 SelectedFileDuration := ""  ; Duration in seconds or formatted string
+VideoDurationCache := Map()  ; key: fullPath, value: {duration:"HH:MM:SS", mtime: <int>, size: <int>}
 
 ; GUI setup
 AssistantGui := WebViewGui("Resize")
@@ -127,10 +128,16 @@ CheckEverythingActive() {
           ; Common video extensions
           IsAVideo := IsVideoFile(ext)
           if IsAVideo {
-            SelectedFileDuration := "__PENDING__" ; sentinel for spinner
             fullPath := SelectedFilePath "\\" SelectedFileName
-            selKey := SelectedFilePath "|" SelectedFileName
-            SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
+            ; Try cache first
+            cached := GetCachedVideoDuration(fullPath)
+            if (cached != "") {
+              SelectedFileDuration := cached
+            } else {
+              SelectedFileDuration := "__PENDING__" ; sentinel for spinner
+              selKey := SelectedFilePath "|" SelectedFileName
+              SetTimer((*) => FetchAndSetVideoDuration(fullPath, selKey), -50)
+            }
           }
         }
 
@@ -239,6 +246,41 @@ FetchAndSetVideoDuration(fullPath, selKey) {
   }
   if (currKey = selKey) {
     SelectedFileDuration := dur
+    SetVideoDurationCache(fullPath, dur)
     AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
   }
+}
+
+GetCachedVideoDuration(fullPath) {
+  global VideoDurationCache
+  if !FileExist(fullPath)
+    return ""
+  mtime := FileGetTime(fullPath, "M") ; modification time
+  size := FileGetSize(fullPath)
+  if (VideoDurationCache.Has(fullPath)) {
+    entry := VideoDurationCache[fullPath]
+    if (entry.mtime = mtime && entry.size = size) {
+      return entry.duration
+    }
+  }
+  return ""
+}
+
+SetVideoDurationCache(fullPath, duration) {
+  global VideoDurationCache
+  if (duration = "")
+    return
+  if !FileExist(fullPath)
+    return
+  mtime := FileGetTime(fullPath, "M")
+  size := FileGetSize(fullPath)
+  ; Simple capacity guard (optional): limit to 500 entries
+  if (VideoDurationCache.Count >= 500) {
+    ; Remove an arbitrary (first) entry to keep memory bounded
+    for k, _ in VideoDurationCache {
+      VideoDurationCache.Delete(k)
+      break
+    }
+  }
+  VideoDurationCache[fullPath] := { duration: duration, mtime: mtime, size: size }
 }
