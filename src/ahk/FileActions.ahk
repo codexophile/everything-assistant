@@ -108,21 +108,12 @@ GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
   ;   "seconds"-> numeric seconds (optionally rounded)
   ;   "hms"    -> HH:MM:SS (rounded to nearest second unless roundSeconds=false, in which case truncates)
   ; Returns "" on failure.
-  global FfprobePath
   if (!filePath || !FileExist(filePath))
     return ""
-  FoundFfprobe := ProgramExistsFromPath(FfprobePath)
-  if (!IsSet(FfprobePath) || FfprobePath = "" || !ProgramExistsFromPath(FfprobePath))
-    return ""
 
-  tempFile := A_Temp "\\ffdur_" A_TickCount ".txt"
-  ffCmd := '"' FfprobePath '" -v error -select_streams v:0 -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "' filePath '"'
-  cmdLine := 'cmd.exe /c "' ffCmd ' > "' tempFile '" 2>nul"'
-  RunWait cmdLine, , "Hide"
-  if !FileExist(tempFile)
-    return ""
-  dur := Trim(FileRead(tempFile))
-  FileDelete(tempFile)
+  CommandLine := 'powershell.exe -NoProfile -NonInteractive -Command "& C:\mega\IDEs\powershell\ffmpeg\ffprobe.ps1 `'' filePath '`' -duration"'
+  FfprobeResult := HiddenCommandLine(CommandLine)
+  dur := Trim(FfprobeResult)
   if (dur = "")
     return ""
 
