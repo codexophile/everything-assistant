@@ -42,7 +42,8 @@ SetSearchOnlyFolder(folderPath) {
   if InStr(curr, only)
     return
   newText := (Trim(curr) = "") ? only : curr . only
-  SetEverythingQuery(newText)
+  Run "Es:" . only
+  ; SetEverythingQuery(newText)
 }
 
 ClearSearchOnlyFolder(folderPath) {
