@@ -111,15 +111,27 @@ GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
   if (!filePath || !FileExist(filePath))
     return ""
 
-  CommandLine := 'powershell.exe -NoProfile -NonInteractive -Command "& C:\mega\IDEs\powershell\ffmpeg\ffprobe.ps1 `'' filePath '`' -duration"'
+  psPath := StrReplace(filePath, "'", "''")  ; double up any apostrophes for PowerShell
+  CommandLine := 'powershell.exe -NoProfile -NonInteractive -Command "& C:\mega\IDEs\powershell\ffmpeg\ffprobe.ps1 `'' psPath '`' -duration"'
+  A_Clipboard := CommandLine
   FfprobeResult := HiddenCommandLine(CommandLine)
-  dur := Trim(FfprobeResult)
+  try {
+    dur := Trim(FfprobeResult)
+  } catch Error as e {
+    MsgBox "one " e.Message
+    return ""
+  }
   if (dur = "")
     return ""
 
   durTrimmed := Trim(dur)
   durTrimmed := RegExReplace(durTrimmed, "[\r\n]")
-  secFloat := durTrimmed + 0.0
+  try {
+    secFloat := durTrimmed + 0.0
+  } catch Error as e {
+    MsgBox e.Message '`n' . durTrimmed
+    return ""
+  }
 
   if (fmt = "raw") {
     if (roundSeconds)
