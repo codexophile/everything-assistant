@@ -127,7 +127,7 @@ GetVideoDuration(filePath, fmt := "hms", roundSeconds := false) {
   ; CommandLine := 'powershell.exe -NoProfile -NonInteractive -Command "& C:\mega\IDEs\powershell\ffmpeg\ffprobe.ps1 `'' psPath '`' -duration"'
   FfprobeResult := HiddenCommandLine(CommandLine)
   try {
-    RegExMatch(FfprobeResult, "(?:\n|\r|^)(\d+(?:\.\d+))(?:\n|\r|$)", &Matches)
+    RegExMatch(FfprobeResult, "(?:\n|\r|^)(\d+(?:\.\d+)?)(?:\n|\r|$)", &Matches)
     if (!Matches) {
       MsgBox "Failed to parse ffprobe output for duration: " . FfprobeResult
       return ""
