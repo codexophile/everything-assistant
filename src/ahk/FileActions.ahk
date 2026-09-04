@@ -178,7 +178,13 @@ Explorer_GetSelected() {
   ID := WinGetID("A")
   shell := ComObject("Shell.Application")
   for window in shell.Windows {
-    if (window.HWND = ID) {
+    WindowHwnd := false
+    try {
+      WindowHwnd := window.HWND
+    } catch Error as e {
+      return ""
+    }
+    if (WindowHwnd = ID) {
       selectedItems := window.Document.SelectedItems
       paths := ""
       for item in selectedItems {
