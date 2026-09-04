@@ -54,6 +54,11 @@ if (OpenDevTools == "1") {
 ; Poll Everything/Assistant focus & selection
 SetTimer(CheckEverythingActive, 100)
 
+ShowMainGui() {
+  AssistantGui.Show("NoActivate")
+  WinSetAlwaysOnTop(True, AssistantGui.hwnd)
+}
+
 ; Query manipulation functions moved to lib/QueryActions.ahk
 
 CheckEverythingActive() {
@@ -141,7 +146,7 @@ CheckEverythingActive() {
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
-    AssistantGui.Show("")
+    ShowMainGui()
   } else if (usingExplorer) { ; Windows Explorer context (may or may not be active now)
     explorerActive := WinActive("ahk_class CabinetWClass")
     if (explorerActive) {
@@ -197,14 +202,14 @@ CheckEverythingActive() {
       }
     }
 
-    AssistantGui.Show("")
+    ShowMainGui()
   } else {
     ; No recognized context window active (Everything/Explorer). If Assistant itself
     ; has focus we keep showing it with the last known selection. Otherwise we can
     ; choose to hide without clearing selection (preserving state for when Assistant
     ; is re-activated). Comment/uncomment behavior as desired.
     if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
-      AssistantGui.Show("") ; Keep visible while focused
+      ShowMainGui() ; Keep visible while focused
     } else {
       ; Optionally hide but keep selection data so it reappears intact
       AssistantGui.Hide()
