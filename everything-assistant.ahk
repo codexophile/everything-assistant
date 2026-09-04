@@ -141,7 +141,7 @@ CheckEverythingActive() {
       AssistantGui.ExecuteScriptAsync("window.updateSelectedFromAhk && window.updateSelectedFromAhk()")
     }
 
-    AssistantGui.Show("NoActivate")
+    AssistantGui.Show("")
   } else if (usingExplorer) { ; Windows Explorer context (may or may not be active now)
     explorerActive := WinActive("ahk_class CabinetWClass")
     if (explorerActive) {
@@ -197,7 +197,7 @@ CheckEverythingActive() {
       }
     }
 
-    AssistantGui.Show(" NoActivate")
+    AssistantGui.Show("")
   } else {
     ; No recognized context window active (Everything/Explorer). If Assistant itself
     ; has focus we keep showing it with the last known selection. Otherwise we can
