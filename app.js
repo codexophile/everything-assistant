@@ -3,6 +3,19 @@ import { setIcon } from './src/js/icons.js';
 import { els } from './src/js/dom.js';
 import { fullUpdate } from './src/js/selection.js';
 
+function updateContext() {
+  const heading = document.querySelector('#app-heading');
+  if (!heading) return;
+
+  Promise.all([ahk.global.CurrentFileContext, ahk.global.CurrentWindowTitle])
+    .then(([context, windowTitle]) => {
+      heading.textContent = windowTitle
+        ? `${context} | ${windowTitle}`
+        : context || 'Everything';
+    })
+    .catch(() => {});
+}
+
 // Simple logger (namespaced) to help diagnose why secondary toolbar might not render
 function log(...args) {
   if (typeof console !== 'undefined') console.log('[EA]', ...args);
@@ -59,13 +72,13 @@ function initSecondaryToolbar() {
       const rect = container.getBoundingClientRect();
       log(
         'secondary toolbar rect',
-        JSON.stringify({ x: rect.x, y: rect.y, w: rect.width, h: rect.height })
+        JSON.stringify({ x: rect.x, y: rect.y, w: rect.width, h: rect.height }),
       );
       [...container.children].forEach((c, i) => {
         const r = c.getBoundingClientRect();
         log(
           `btn${i} tag=${c.tagName} id=${c.id} classes=${c.className} rect=`,
-          JSON.stringify({ x: r.x, y: r.y, w: r.width, h: r.height })
+          JSON.stringify({ x: r.x, y: r.y, w: r.width, h: r.height }),
         );
       });
       setTimeout(() => {
@@ -77,7 +90,7 @@ function initSecondaryToolbar() {
             y: rect2.y,
             w: rect2.width,
             h: rect2.height,
-          })
+          }),
         );
       }, 500);
     } catch (e) {
@@ -147,6 +160,8 @@ function initReloadButton() {
 }
 
 async function init() {
+  window.updateContextFromAhk = updateContext;
+  updateContext();
   initReloadButton();
   initPrimaryToolbar();
   initSecondaryToolbar();

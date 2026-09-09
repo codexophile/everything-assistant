@@ -16,6 +16,7 @@ SetWorkingDir(A_ScriptDir)
 ; Constants
 EverythingWindowTitle := "ahk_exe Everything64.exe"
 AssistantWindowTitle := "Everything Assistant"
+EverythingUiDevToolsTitle := "DevTools - ahk.localhost/index.html"
 MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
 ElectronSubPath := "node_modules\electron\dist\electron.exe"
@@ -23,6 +24,10 @@ AvidemuxPath := "C:\Program Files\Avidemux\avidemux.exe"
 ; Tracks which file browser (Everything / Explorer) was last active so that
 ; when the Assistant window itself is focused we still reflect the correct context
 LastFileContext := "everything"  ; default
+CurrentFileContext := "Everything"
+CurrentWindowTitle := ""
+LastDisplayedContext := ""
+LastDisplayedWindowTitle := ""
 
 ; Hotkeys
 ; Alt+Shift+C -> Clean the current Everything query (remove &, commas, square brackets, tidy spaces)
@@ -66,13 +71,24 @@ CheckEverythingActive() {
   global SelectedFilePath, SelectedFileName, LastSelectedPath, LastSelectedName
   global SelectedNames, SelectedCount, SelectedFolderPaths, SelectedChaptersJson, SelectedFileDuration
   global EverythingWindowTitle, AssistantWindowTitle, LastFileContext
+  global CurrentFileContext, CurrentWindowTitle, LastDisplayedContext, LastDisplayedWindowTitle
   ; Do NOT reset LastFileContext each tick; we need it when Assistant is focused.
 
   ; Track which underlying window (Everything or Explorer) was last active
   if WinActive(EverythingWindowTitle) {
     LastFileContext := "everything"
+    CurrentFileContext := "Everything"
+    CurrentWindowTitle := WinGetTitle("A")
   } else if WinActive("ahk_class CabinetWClass") {
     LastFileContext := "explorer"
+    CurrentFileContext := "Explorer"
+    CurrentWindowTitle := WinGetTitle("A")
+  }
+
+  if (CurrentFileContext != LastDisplayedContext || CurrentWindowTitle != LastDisplayedWindowTitle) {
+    LastDisplayedContext := CurrentFileContext
+    LastDisplayedWindowTitle := CurrentWindowTitle
+    AssistantGui.ExecuteScriptAsync("window.updateContextFromAhk && window.updateContextFromAhk()")
   }
 
   usingEverything := false
@@ -82,7 +98,7 @@ CheckEverythingActive() {
     usingEverything := true
   } else if WinActive("ahk_class CabinetWClass") {
     usingExplorer := true
-  } else if WinActive(AssistantWindowTitle) OR WinActive("DevTools - ahk.localhost/index.html") {
+  } else if WinActive(AssistantWindowTitle) OR WinActive(EverythingUiDevToolsTitle) {
     ; Assistant (or its DevTools) is active – defer to last active context
     if (LastFileContext = "everything")
       usingEverything := true
@@ -208,7 +224,7 @@ CheckEverythingActive() {
     ; has focus we keep showing it with the last known selection. Otherwise we can
     ; choose to hide without clearing selection (preserving state for when Assistant
     ; is re-activated). Comment/uncomment behavior as desired.
-    if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
+    if WinActive(AssistantWindowTitle) OR WinActive(EverythingUiDevToolsTitle) {
       ShowMainGui() ; Keep visible while focused
     } else {
       ; Optionally hide but keep selection data so it reappears intact
