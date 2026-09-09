@@ -14,7 +14,7 @@
 SetWorkingDir(A_ScriptDir)
 
 ; Constants
-EverythingWindowTitle := "ahk_class EVERYTHING_(1.5a)"
+EverythingWindowTitle := "ahk_exe Everything64.exe"
 AssistantWindowTitle := "Everything Assistant"
 MainWidth := 300
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
@@ -82,7 +82,7 @@ CheckEverythingActive() {
     usingEverything := true
   } else if WinActive("ahk_class CabinetWClass") {
     usingExplorer := true
-  } else if WinActive(AssistantWindowTitle) OR WinActive("DevTools") {
+  } else if WinActive(AssistantWindowTitle) OR WinActive("DevTools - ahk.localhost/index.html") {
     ; Assistant (or its DevTools) is active – defer to last active context
     if (LastFileContext = "everything")
       usingEverything := true
