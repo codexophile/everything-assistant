@@ -10,6 +10,8 @@
 #Include ./src/ahk/FileActions.ahk
 #Include ./src/ahk/ConfigManager.ahk
 
+TraySetIcon 'C:\Mega\IDEs\AutoHotkey v2\#stuff\everything-assistant.ico'
+
 ; Ensure working directory is script folder so relative paths (config.ini) resolve
 SetWorkingDir(A_ScriptDir)
 
