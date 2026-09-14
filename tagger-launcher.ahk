@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
 FileTaggerPath := "c:\mega\IDEs\Electron\file-tagger\"
-ElectronSubPath := "node_modules\electron\dist\electron.exe"
-Run(FileTaggerPath ElectronSubPath " " FileTaggerPath " --files-list " '"' A_Args[1] '"')
+ElectronExePath := A_AppData "\Electron Fiddle\electron-bin\current\electron.exe"
+Run(ElectronExePath " " FileTaggerPath " --files-list " '"' A_Args[1] '"')
